@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('reports.title', 'Reports & Analytics') }} - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-chart-bar me-2"></i>{{ t('reports.title', 'Reports & Analytics') }}</h2>
+    <div class="btn-group">
+        <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="fas fa-download me-1"></i>{{ t('reports.export', 'Export') }}
+        </button>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#" onclick="exportPDF()"><i
+                        class="fas fa-file-pdf me-2 text-danger"></i>PDF</a></li>
+            <li><a class="dropdown-item" href="#" onclick="exportExcel()"><i
+                        class="fas fa-file-excel me-2 text-success"></i>Excel</a></li>
+        </ul>
+    </div>
+</div>
+
+<!-- Report Type Selector -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">{{ t('reports.type', 'Report Type') }}</label>
+                <select id="reportType" class="form-select" onchange="loadReport()">
+                    <option value="sales" {% if report_type=='sales' %}selected{% endif %}>{{ t('reports.sales',
+                        'Sales') }}</option>
+                    <option value="production" {% if report_type=='production' %}selected{% endif %}>{{
+                        t('reports.production', 'Production') }}</option>
+                    <option value="inventory" {% if report_type=='inventory' %}selected{% endif %}>{{
+                        t('reports.inventory', 'Inventory') }}</option>
+                    <option value="financial" {% if report_type=='financial' %}selected{% endif %}>{{
+                        t('reports.financial', 'Financial') }}</option>
+                    <option value="customers" {% if report_type=='customers' %}selected{% endif %}>{{
+                        t('reports.customers', 'Customers') }}</option>
+                    <option value="quality" {% if report_type=='quality' %}selected{% endif %}>{{ t('reports.quality',
+                        'Quality') }}</option>
+                    <option value="staff" {% if report_type=='staff' %}selected{% endif %}>{{ t('reports.staff',
+                        'Staff') }}</option>
+                    <option value="equipment" {% if report_type=='equipment' %}selected{% endif %}>{{
+                        t('reports.equipment', 'Equipment') }}</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">{{ t('reports.period', 'Period') }}</label>
+                <select id="period" class="form-select" onchange="loadReport()">
+                    <option value="today" {% if period=='today' %}selected{% endif %}>{{ t('period.today', 'Today') }}
+                    </option>
+                    <option value="week" {% if period=='week' %}selected{% endif %}>{{ t('period.week', 'This Week') }}
+                    </option>
+                    <option value="month" {% if period=='month' %}selected{% endif %}>{{ t('period.month', 'This Month')
+                        }}</option>
+                    <option value="quarter" {% if period=='quarter' %}selected{% endif %}>{{ t('period.quarter', 'This
+                        Quarter') }}</option>
+                    <option value="year" {% if period=='year' %}selected{% endif %}>{{ t('period.year', 'This Year') }}
+                    </option>
+                    <option value="custom" {% if period=='custom' %}selected{% endif %}>{{ t('period.custom', 'Custom')
+                        }}</option>
+                </select>
+            </div>
+            <div class="col-md-3" id="startDateCol" style="display: none;">
+                <label class="form-label">{{ t('reports.start_date', 'Start Date') }}</label>
+                <input type="date" id="startDate" class="form-control" value="{{ start_date or '' }}"
+                    onchange="loadReport()">
+            </div>
+            <div class="col-md-3" id="endDateCol" style="display: none;">
+                <label class="form-label">{{ t('reports.end_date', 'End Date') }}</label>
+                <input type="date" id="endDate" class="form-control" value="{{ end_date or '' }}"
+                    onchange="loadReport()">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Content -->
+<div id="reportContent">
+    {% if report_type == 'sales' %}
+    {% include 'reports/sales.html' %}
+    {% elif report_type == 'production' %}
+    {% include 'reports/production.html' %}
+    {% elif report_type == 'inventory' %}
+    {% include 'reports/inventory.html' %}
+    {% elif report_type == 'financial' %}
+    {% include 'reports/financial.html' %}
+    {% elif report_type == 'customers' %}
+    {% include 'reports/customers.html' %}
+    {% elif report_type == 'quality' %}
+    {% include 'reports/quality.html' %}
+    {% elif report_type == 'staff' %}
+    {% include 'reports/staff.html' %}
+    {% elif report_type == 'equipment' %}
+    {% include 'reports/equipment.html' %}
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    function loadReport() {
+        const type = document.getElementById('reportType').value;
+        const period = document.getElementById('period').value;
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+
+        // Show/hide custom date fields
+        const showCustom = period === 'custom';
+        document.getElementById('startDateCol').style.display = showCustom ? 'block' : 'none';
+        document.getElementById('endDateCol').style.display = showCustom ? 'block' : 'none';
+
+        let url = `/reports?type=${type}&period=${period}`;
+        if (showCustom && startDate && endDate) {
+            url += `&start_date=${startDate}&end_date=${endDate}`;
+        }
+
+        window.location.href = url;
+    }
+
+    function exportPDF() {
+        const type = document.getElementById('reportType').value;
+        const period = document.getElementById('period').value;
+        window.open(`/reports/export/pdf?type=${type}&period=${period}`, '_blank');
+    }
+
+    function exportExcel() {
+        const type = document.getElementById('reportType').value;
+        const period = document.getElementById('period').value;
+        window.open(`/reports/export/excel?type=${type}&period=${period}`, '_blank');
+    }
+
+    // Initialize custom date visibility
+    if (document.getElementById('period').value === 'custom') {
+        document.getElementById('startDateCol').style.display = 'block';
+        document.getElementById('endDateCol').style.display = 'block';
+    }
+</script>
+{% endblock %}

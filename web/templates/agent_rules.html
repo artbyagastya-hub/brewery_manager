@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('agent_rules', 'Agent Rules') }} - {{ t('brewery_manager', 'Brewery Manager') }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>⚙️ {{ t('agent_rules', 'Agent Rules') }}</h2>
+    <div>
+        <a href="/analytics" class="btn btn-outline-primary">
+            📊 {{ t('analytics', 'Analytics') }}
+        </a>
+        <a href="/agent/logs" class="btn btn-outline-secondary ms-2">
+            🤖 {{ t('agent_logs', 'Agent Logs') }}
+        </a>
+    </div>
+</div>
+
+<!-- Rules by Category -->
+{% for category, category_rules in rules_by_category.items() %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">
+            {% if category == 'inventory' %}📦
+            {% elif category == 'maintenance' %}🔧
+            {% elif category == 'production' %}🍺
+            {% elif category == 'quality' %}🧪
+            {% elif category == 'finance' %}💰
+            {% else %}📋{% endif %}
+            {{ category|title }} {{ t('rules', 'Rules') }}
+        </h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>{{ t('rule_name', 'Rule Name') }}</th>
+                        <th>{{ t('description', 'Description') }}</th>
+                        <th>{{ t('autonomy', 'Autonomy') }}</th>
+                        <th>{{ t('triggers', 'Triggers') }}</th>
+                        <th>{{ t('status', 'Status') }}</th>
+                        <th>{{ t('actions', 'Actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rule in category_rules %}
+                    <tr>
+                        <td>
+                            <strong>{{ rule.name }}</strong>
+                        </td>
+                        <td>
+                            <small class="text-muted">{{ rule.description }}</small>
+                        </td>
+                        <td>
+                            {% if rule.autonomy_level == 'auto' %}
+                            <span class="badge bg-success">🤖 {{ t('auto', 'Auto') }}</span>
+                            {% elif rule.autonomy_level == 'semi' %}
+                            <span class="badge bg-warning">👤 {{ t('semi', 'Semi-Auto') }}</span>
+                            {% else %}
+                            <span class="badge bg-info">👁️ {{ t('manual', 'Manual') }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">{{ rule.trigger_count }}</span>
+                            {% if rule.last_triggered %}
+                            <br><small class="text-muted">{{ rule.last_triggered }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if rule.is_enabled %}
+                            <span class="badge bg-success">✅ {{ t('enabled', 'Enabled') }}</span>
+                            {% else %}
+                            <span class="badge bg-danger">❌ {{ t('disabled', 'Disabled') }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form method="POST" action="/agent/rules/{{ rule.id }}/toggle" class="d-inline">
+                                {% if rule.is_enabled %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    {{ t('disable', 'Disable') }}
+                                </button>
+                                {% else %}
+                                <button type="submit" class="btn btn-sm btn-outline-success">
+                                    {{ t('enable', 'Enable') }}
+                                </button>
+                                {% endif %}
+                            </form>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
+                                data-bs-target="#ruleModal{{ rule.id }}">
+                                {{ t('details', 'Details') }}
+                            </button>
+                        </td>
+                    </tr>
+
+                    <!-- Modal for rule details -->
+                    <div class="modal fade" id="ruleModal{{ rule.id }}" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">{{ rule.name }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6>{{ t('trigger_condition', 'Trigger Condition') }}</h6>
+                                            <pre
+                                                class="bg-light p-2 rounded"><code>{{ rule.trigger_condition }}</code></pre>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6>{{ t('action_config', 'Action Configuration') }}</h6>
+                                            <pre
+                                                class="bg-light p-2 rounded"><code>{{ rule.action_config }}</code></pre>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <h6>{{ t('action_type', 'Action Type') }}</h6>
+                                            <span class="badge bg-primary">{{ rule.action_type }}</span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6>{{ t('autonomy_level', 'Autonomy Level') }}</h6>
+                                            <span class="badge bg-info">{{ rule.autonomy_level }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Info Card -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">ℹ️ {{ t('about_agent', 'About Agent Rules') }}</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <h6>🤖 {{ t('auto_mode', 'Auto Mode') }}</h6>
+                <p class="text-muted small">{{ t('auto_mode_desc', 'Agent takes action automatically without human
+                    approval') }}</p>
+            </div>
+            <div class="col-md-4">
+                <h6>👤 {{ t('semi_mode', 'Semi-Auto Mode') }}</h6>
+                <p class="text-muted small">{{ t('semi_mode_desc', 'Agent creates tasks/notifications but requires human
+                    action') }}</p>
+            </div>
+            <div class="col-md-4">
+                <h6>👁️ {{ t('manual_mode', 'Manual Mode') }}</h6>
+                <p class="text-muted small">{{ t('manual_mode_desc', 'Agent only monitors and reports, no automatic
+                    actions') }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

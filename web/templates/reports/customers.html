@@ -1,0 +1,135 @@
+<!-- Customer Report -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h6 class="card-title">{{ t('customers.total', 'Total Customers') }}</h6>
+                <h3>{{ report_data.summary.total_customers }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h6 class="card-title">{{ t('customers.active', 'Active Customers') }}</h6>
+                <h3>{{ report_data.summary.active_customers }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h6 class="card-title">{{ t('customers.total_orders', 'Total Orders') }}</h6>
+                <h3>{{ report_data.summary.total_orders }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">{{ t('customers.segments', 'Customer Segments') }}</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="segmentsChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">{{ t('customers.top_ltv', 'Top Customers by LTV') }}</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>{{ t('common.customer', 'Customer') }}</th>
+                            <th>{{ t('customers.ltv', 'Lifetime Value') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in report_data.top_by_ltv[:10] %}
+                        <tr>
+                            <td>{{ customer.name }}</td>
+                            <td>{{ customer.ltv | currency }} VND</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">{{ t('customers.top_orders', 'Top Customers by Orders') }}</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>{{ t('common.customer', 'Customer') }}</th>
+                            <th>{{ t('common.orders', 'Orders') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in report_data.top_by_orders[:10] %}
+                        <tr>
+                            <td>{{ customer.name }}</td>
+                            <td>{{ customer.orders }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">{{ t('customers.avg_order_value', 'Average Order Value') }}</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>{{ t('common.customer', 'Customer') }}</th>
+                            <th>{{ t('customers.avg_order', 'Avg Order') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer, avg in report_data.avg_order_values.items() %}
+                        <tr>
+                            <td>{{ customer }}</td>
+                            <td>{{ avg | currency }} VND</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const segmentsCtx = document.getElementById('segmentsChart').getContext('2d');
+    new Chart(segmentsCtx, {
+        type: 'pie',
+        data: {
+            labels: {{ report_data.segments.keys() | list | tojson }},
+        datasets: [{
+            data: {{ report_data.segments.values() | map(attribute = 'count') | list | tojson }},
+        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF']
+            }]
+        },
+        options: {
+        responsive: true
+    }
+    });
+</script>

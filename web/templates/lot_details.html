@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('lot_details', default='Lot Details') }} - {{ lot.lot_number }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>{{ t('lot_details', default='Lot Details') }}: {{ lot.lot_number }}</h2>
+        <a href="{{ url_for('lots') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> {{ t('back', default='Back') }}
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Lot Information -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ t('lot_information', default='Lot Information') }}</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th>{{ t('lot_number', default='Lot Number') }}:</th>
+                            <td>{{ lot.lot_number }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('item', default='Item') }}:</th>
+                            <td>{{ lot.material_name or lot.product_name or '-' }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('type', default='Type') }}:</th>
+                            <td>
+                                <span
+                                    class="badge bg-{{ 'primary' if lot.item_type == 'raw_material' else 'success' }}">
+                                    {{ t(lot.item_type, default=lot.item_type) }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('quantity', default='Quantity') }}:</th>
+                            <td>{{ lot.quantity }} {{ lot.unit }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('received_date', default='Received Date') }}:</th>
+                            <td>{{ lot.received_date or '-' }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('expiry_date', default='Expiry Date') }}:</th>
+                            <td>{{ lot.expiry_date or '-' }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('supplier', default='Supplier') }}:</th>
+                            <td>{{ lot.supplier or '-' }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('supplier_lot', default='Supplier Lot') }}:</th>
+                            <td>{{ lot.supplier_lot or '-' }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('storage_location', default='Storage') }}:</th>
+                            <td>{{ lot.storage_location or '-' }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('status', default='Status') }}:</th>
+                            <td>
+                                <span
+                                    class="badge bg-{{ 'success' if lot.status == 'active' else 'secondary' if lot.status == 'depleted' else 'danger' }}">
+                                    {{ t(lot.status, default=lot.status) }}
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- Status Update Form -->
+                    <form method="POST" action="{{ url_for('update_lot_status_route', lot_id=lot.id) }}" class="mt-3">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="input-group">
+                            <select name="status" class="form-select">
+                                <option value="active" {% if lot.status=='active' %}selected{% endif %}>{{ t('active',
+                                    default='Active') }}</option>
+                                <option value="depleted" {% if lot.status=='depleted' %}selected{% endif %}>{{
+                                    t('depleted', default='Depleted') }}</option>
+                                <option value="expired" {% if lot.status=='expired' %}selected{% endif %}>{{
+                                    t('expired', default='Expired') }}</option>
+                                <option value="quarantine" {% if lot.status=='quarantine' %}selected{% endif %}>{{
+                                    t('quarantine', default='Quarantine') }}</option>
+                            </select>
+                            <button type="submit" class="btn btn-outline-primary">{{ t('update', default='Update')
+                                }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Traceability -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ t('traceability', default='Traceability') }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if forward_trace %}
+                    <h6>{{ t('forward_trace', default='Used In (Forward)') }}:</h6>
+                    <ul class="list-group mb-3">
+                        {% for trace in forward_trace %}
+                        <li class="list-group-item">
+                            <strong>{{ trace.batch_number }}</strong> - {{ trace.product_name }}
+                            <br><small class="text-muted">{{ trace.quantity }} {{ trace.unit }}</small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+
+                    {% if backward_trace %}
+                    <h6>{{ t('backward_trace', default='Sources (Backward)') }}:</h6>
+                    <ul class="list-group">
+                        {% for trace in backward_trace %}
+                        <li class="list-group-item">
+                            <strong>{{ trace.lot_number }}</strong> - {{ trace.material_name }}
+                            <br><small class="text-muted">{{ trace.quantity }} {{ trace.unit }}</small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+
+                    {% if not forward_trace and not backward_trace %}
+                    <p class="text-muted">{{ t('no_traceability_data', default='No traceability data available') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if lot.notes %}
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">{{ t('notes', default='Notes') }}</h5>
+        </div>
+        <div class="card-body">
+            <p>{{ lot.notes }}</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

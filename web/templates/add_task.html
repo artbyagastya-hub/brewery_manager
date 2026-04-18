@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Add Task - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>➕ Add Daily Task</h2>
+    <a href="{{ url_for('briefings', date=task_date) }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Briefings
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Task Date *</label>
+                            <input type="date" name="task_date" class="form-control" value="{{ task_date }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Task Type *</label>
+                            <select name="task_type" class="form-select" required>
+                                <option value="brewing">Brewing</option>
+                                <option value="packaging">Packaging</option>
+                                <option value="cleaning">Cleaning</option>
+                                <option value="maintenance">Maintenance</option>
+                                <option value="delivery">Delivery</option>
+                                <option value="inventory">Inventory</option>
+                                <option value="quality">Quality Check</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Task Title *</label>
+                        <input type="text" name="title" class="form-control" placeholder="e.g., Brew Batch #123"
+                            required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-control" rows="3"
+                            placeholder="Additional details..."></textarea>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Assigned To</label>
+                            <select name="assigned_to" class="form-select">
+                                <option value="">-- Unassigned --</option>
+                                {% for s in staff %}
+                                <option value="{{ s.id }}">{{ s.name }} ({{ s.position }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Priority</label>
+                            <select name="priority" class="form-select">
+                                <option value="normal">Normal</option>
+                                <option value="high">High</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea name="notes" class="form-control" rows="2"
+                            placeholder="Additional notes..."></textarea>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check"></i> Add Task
+                        </button>
+                        <a href="{{ url_for('briefings', date=task_date) }}"
+                            class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Quick Templates</h6>
+            </div>
+            <div class="card-body">
+                <button type="button" class="btn btn-outline-primary btn-sm w-100 mb-2"
+                    onclick="fillTemplate('brewing')">
+                    🍺 Brewing Day
+                </button>
+                <button type="button" class="btn btn-outline-primary btn-sm w-100 mb-2"
+                    onclick="fillTemplate('packaging')">
+                    📦 Packaging Run
+                </button>
+                <button type="button" class="btn btn-outline-primary btn-sm w-100 mb-2"
+                    onclick="fillTemplate('cleaning')">
+                    🧹 Tank Cleaning
+                </button>
+                <button type="button" class="btn btn-outline-primary btn-sm w-100 mb-2"
+                    onclick="fillTemplate('delivery')">
+                    🚚 Delivery Run
+                </button>
+                <button type="button" class="btn btn-outline-primary btn-sm w-100" onclick="fillTemplate('inventory')">
+                    📋 Inventory Check
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function fillTemplate(type) {
+        const templates = {
+            brewing: {
+                type: 'brewing',
+                title: 'Brew Batch',
+                description: 'Full brew day: mash, boil, chill, pitch yeast'
+            },
+            packaging: {
+                type: 'packaging',
+                title: 'Packaging Run',
+                description: 'Can/keg finished beer from bright tank'
+            },
+            cleaning: {
+                type: 'cleaning',
+                title: 'CIP Clean Tank',
+                description: 'Clean-in-place: caustic, acid, sanitize cycle'
+            },
+            delivery: {
+                type: 'delivery',
+                title: 'Delivery Run',
+                description: 'Deliver orders to customers'
+            },
+            inventory: {
+                type: 'inventory',
+                title: 'Weekly Inventory Count',
+                description: 'Count all raw materials and finished goods'
+            }
+        };
+
+        const t = templates[type];
+        document.querySelector('[name="task_type"]').value = t.type;
+        document.querySelector('[name="title"]').value = t.title;
+        document.querySelector('[name="description"]').value = t.description;
+    }
+</script>
+{% endblock %}

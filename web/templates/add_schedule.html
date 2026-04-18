@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('add_schedule', 'Add Schedule') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="fas fa-plus text-primary me-2"></i>
+            {{ t('add_schedule', 'Add Schedule Entry') }}
+        </h1>
+        <a href="{{ url_for('production_planning') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> {{ t('back', 'Back') }}
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="product_id" class="form-label">{{ t('product', 'Product') }} *</label>
+                                <select name="product_id" id="product_id" class="form-select" required>
+                                    <option value="">{{ t('select_product', 'Select Product') }}</option>
+                                    {% for product in products %}
+                                    <option value="{{ product.id }}">{{ product.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="tank_id" class="form-label">{{ t('tank', 'Tank') }}</label>
+                                <select name="tank_id" id="tank_id" class="form-select">
+                                    <option value="">{{ t('select_tank', 'Select Tank (Optional)') }}</option>
+                                    {% for tank in tanks %}
+                                    <option value="{{ tank.id }}">{{ tank.name }} ({{ tank.capacity }}L - {{ tank.status
+                                        }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="schedule_date" class="form-label">{{ t('schedule_date', 'Schedule Date') }}
+                                    *</label>
+                                <input type="date" name="schedule_date" id="schedule_date" class="form-control"
+                                    required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="planned_quantity" class="form-label">{{ t('planned_quantity', 'Planned
+                                    Quantity (L)') }} *</label>
+                                <input type="number" name="planned_quantity" id="planned_quantity" class="form-control"
+                                    step="0.01" min="0" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">{{ t('notes', 'Notes') }}</label>
+                            <textarea name="notes" id="notes" class="form-control" rows="3"></textarea>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> {{ t('save', 'Save') }}
+                            </button>
+                            <a href="{{ url_for('production_planning') }}" class="btn btn-outline-secondary">
+                                {{ t('cancel', 'Cancel') }}
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        {{ t('help', 'Help') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        {{ t('schedule_help', 'Schedule a production batch by selecting a product, tank, and date. The
+                        system will check for conflicts automatically.') }}
+                    </p>
+                    <ul class="text-muted small">
+                        <li>{{ t('help_product', 'Select the product to produce') }}</li>
+                        <li>{{ t('help_tank', 'Optionally assign a specific tank') }}</li>
+                        <li>{{ t('help_date', 'Choose the production start date') }}</li>
+                        <li>{{ t('help_quantity', 'Enter the planned batch volume') }}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

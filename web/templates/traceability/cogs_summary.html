@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('traceability.cogs_summary', 'COGS Summary') }} - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-chart-pie me-2"></i>{{ t('traceability.cogs_summary', 'COGS Summary') }}</h2>
+        <a href="{{ url_for('traceability_lots') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>{{ t('common.back', 'Back to Lots') }}
+        </a>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">{{ t('traceability.total_batches', 'Total Batches') }}</h6>
+                    <h3>{{ summary.products|sum(attribute='batch_count') }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-title">{{ t('traceability.total_cogs', 'Total COGS') }}</h6>
+                    <h3>{{ summary.products|sum(attribute='total_cost')|currency }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6 class="card-title">{{ t('traceability.avg_cogs_per_batch', 'Avg COGS/Batch') }}</h6>
+                    <h3>{{ (summary.products|sum(attribute='total_cost') /
+                        (summary.products|sum(attribute='batch_count') or 1))|round(2)|currency }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <h6 class="card-title">{{ t('traceability.total_volume', 'Total Volume') }}</h6>
+                    <h3>{{ summary.products|sum(attribute='total_volume')|round(0) }} L</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- COGS by Product -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">{{ t('traceability.cogs_by_product', 'COGS by Product') }}</h5>
+        </div>
+        <div class="card-body">
+            {% if summary %}
+            <div class="table-responsive">
+                <table class="table table-hover" id="cogsTable">
+                    <thead>
+                        <tr>
+                            <th>{{ t('traceability.product', 'Product') }}</th>
+                            <th class="text-end">{{ t('traceability.batches', 'Batches') }}</th>
+                            <th class="text-end">{{ t('traceability.total_volume', 'Total Volume (L)') }}</th>
+                            <th class="text-end">{{ t('traceability.total_cogs', 'Total COGS') }}</th>
+                            <th class="text-end">{{ t('traceability.avg_cost_liter', 'Avg Cost/Liter') }}</th>
+                            <th class="text-end">{{ t('traceability.min_cost', 'Min Cost/L') }}</th>
+                            <th class="text-end">{{ t('traceability.max_cost', 'Max Cost/L') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in summary.products %}
+                        <tr>
+                            <td><strong>{{ item.product_name }}</strong></td>
+                            <td class="text-end">{{ item.batch_count }}</td>
+                            <td class="text-end">{{ item.total_volume|round(1) }}</td>
+                            <td class="text-end">{{ item.total_cost|currency }}</td>
+                            <td class="text-end"><strong>{{ item.avg_cost_per_unit|round(2)|currency }}</strong></td>
+                            <td class="text-end text-success">-</td>
+                            <td class="text-end text-danger">-</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-dark">
+                        <tr>
+                            <th>{{ t('common.total', 'TOTAL') }}</th>
+                            <th class="text-end">{{ summary.products|sum(attribute='batch_count') }}</th>
+                            <th class="text-end">{{ summary.products|sum(attribute='total_volume')|round(1) }}</th>
+                            <th class="text-end">{{ summary.products|sum(attribute='total_cost')|currency }}</th>
+                            <th class="text-end">{{ (summary.products|sum(attribute='total_cost') /
+                                (summary.products|sum(attribute='total_volume') or 1))|round(2)|currency }}</th>
+                            <th class="text-end">-</th>
+                            <th class="text-end">-</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted">{{ t('traceability.no_cogs_data', 'No COGS data available yet.') }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Cost Breakdown by Category -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ t('traceability.cost_by_category', 'Cost by Category') }}</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="categoryChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ t('traceability.cogs_trend', 'COGS Trend') }}</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="trendChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#cogsTable').DataTable({
+            "order": [[3, "desc"]],
+            "pageLength": 25
+        });
+
+        // Category Chart
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Malt', 'Hops', 'Yeast', 'Adjuncts', 'Other'],
+                datasets: [{
+                    data: [45, 20, 15, 12, 8],
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+
+        // Trend Chart
+        const trendCtx = document.getElementById('trendChart').getContext('2d');
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Avg Cost/Liter',
+                    data: [12.5, 12.8, 13.1, 12.9, 13.2, 13.0],
+                    borderColor: '#36A2EB',
+                    tension: 0.1,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                },
+                scales: {
+                    y: { beginAtZero: false }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

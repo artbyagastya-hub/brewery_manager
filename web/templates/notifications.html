@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('notifications', 'Notifications') }} - {{ t('brewery_manager', 'Brewery Manager') }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>🔔 {{ t('notifications', 'Notifications') }}</h2>
+    <div>
+        {% if unread_count > 0 %}
+        <form method="POST" action="/notifications/mark-all-read" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline-primary">
+                ✓ {{ t('mark_all_read', 'Mark All Read') }}
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">{{ t('all_notifications', 'All Notifications') }}</h5>
+                <span class="badge bg-primary">{{ notifications|length }}</span>
+            </div>
+            <div class="card-body p-0">
+                {% if notifications %}
+                <div class="list-group list-group-flush">
+                    {% for notification in notifications %}
+                    <div class="list-group-item {% if not notification.is_read %}list-group-item-light{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-1">
+                                    {% if notification.type == 'urgent' %}
+                                    <span class="badge bg-danger me-2">🔴 {{ t('urgent', 'Urgent') }}</span>
+                                    {% elif notification.type == 'warning' %}
+                                    <span class="badge bg-warning me-2">🟡 {{ t('warning', 'Warning') }}</span>
+                                    {% elif notification.type == 'success' %}
+                                    <span class="badge bg-success me-2">🟢 {{ t('success', 'Success') }}</span>
+                                    {% else %}
+                                    <span class="badge bg-info me-2">🔵 {{ t('info', 'Info') }}</span>
+                                    {% endif %}
+                                    <strong>{{ notification.title }}</strong>
+                                </div>
+                                <p class="mb-1 text-muted">{{ notification.message }}</p>
+                                <small class="text-muted">
+                                    🕐 {{ notification.created_at }}
+                                </small>
+                            </div>
+                            <div class="ms-3">
+                                {% if notification.link %}
+                                <a href="{{ notification.link }}" class="btn btn-sm btn-outline-primary">
+                                    {{ t('view', 'View') }}
+                                </a>
+                                {% endif %}
+                                {% if not notification.is_read %}
+                                <form method="POST" action="/notifications/{{ notification.id }}/read" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                        ✓
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <h4 class="text-muted">🔔</h4>
+                    <p class="text-muted">{{ t('no_notifications', 'No notifications') }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">📊 {{ t('notification_stats', 'Statistics') }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h3 class="text-primary">{{ notifications|length }}</h3>
+                        <small class="text-muted">{{ t('total', 'Total') }}</small>
+                    </div>
+                    <div class="col-6">
+                        <h3 class="text-warning">{{ unread_count }}</h3>
+                        <small class="text-muted">{{ t('unread', 'Unread') }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">🤖 {{ t('agent_alerts', 'Agent Alerts') }}</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">
+                    {{ t('agent_alerts_desc', 'The agent monitors your brewery and sends alerts for:') }}
+                </p>
+                <ul class="list-unstyled small">
+                    <li>📦 {{ t('alert_low_stock', 'Low stock materials') }}</li>
+                    <li>⏰ {{ t('alert_expiring', 'Expiring materials') }}</li>
+                    <li>🔧 {{ t('alert_maintenance', 'Overdue maintenance') }}</li>
+                    <li>🧪 {{ t('alert_quality', 'Quality failures') }}</li>
+                    <li>💰 {{ t('alert_profit', 'Low profit margins') }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('traceability.forward_trace', 'Forward Trace') }} - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-search-plus me-2"></i>{{ t('traceability.forward_trace', 'Forward Trace') }}</h2>
+        <a href="{{ url_for('traceability_lots') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>{{ t('common.back', 'Back to Lots') }}
+        </a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">{{ t('traceability.select_lot', 'Select Lot to Trace') }}</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-8">
+                    <select class="form-select" name="lot_id" required>
+                        <option value="">{{ t('traceability.select_lot_placeholder', 'Select a lot...') }}</option>
+                        {% for lot in lots %}
+                        <option value="{{ lot.id }}" {% if selected_lot and selected_lot.id==lot.id %}selected{% endif
+                            %}>
+                            {{ lot.lot_number }} - {{ lot.material_name }} ({{ lot.quantity_remaining }} {{ lot.unit }}
+                            remaining)
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-1"></i>{{ t('traceability.trace', 'Trace') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if selected_lot %}
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">{{ t('traceability.trace_results', 'Trace Results') }}: {{ selected_lot.lot_number }}</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h6>{{ t('traceability.lot_info', 'Lot Information') }}</h6>
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <th>{{ t('traceability.material', 'Material') }}</th>
+                            <td>{{ selected_lot.material_name }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('traceability.supplier', 'Supplier') }}</th>
+                            <td>{{ selected_lot.supplier or '-' }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('traceability.received', 'Received') }}</th>
+                            <td>{{ selected_lot.received_date }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('traceability.remaining', 'Remaining') }}</th>
+                            <td>{{ selected_lot.quantity_remaining }} {{ selected_lot.unit }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6>{{ t('traceability.usage_summary', 'Usage Summary') }}</h6>
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <th>{{ t('traceability.total_used', 'Total Used') }}</th>
+                            <td>{{ (selected_lot.quantity_received - selected_lot.quantity_remaining)|round(2) }} {{
+                                selected_lot.unit }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('traceability.batches_used', 'Batches Used In') }}</th>
+                            <td>{{ trace_data|length }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <h6>{{ t('traceability.used_in_batches', 'Used in Batches') }}</h6>
+            {% if trace_data %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>{{ t('traceability.batch_number', 'Batch Number') }}</th>
+                            <th>{{ t('traceability.product', 'Product') }}</th>
+                            <th>{{ t('traceability.date', 'Date') }}</th>
+                            <th class="text-end">{{ t('traceability.qty_used', 'Qty Used') }}</th>
+                            <th class="text-end">{{ t('traceability.cost', 'Cost') }}</th>
+                            <th>{{ t('traceability.status', 'Status') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in trace_data %}
+                        <tr>
+                            <td><a href="{{ url_for('batch_cogs', batch_id=item.batch_id) }}">{{ item.batch_number
+                                    }}</a></td>
+                            <td>{{ item.product_name }}</td>
+                            <td>{{ item.used_date }}</td>
+                            <td class="text-end">{{ item.quantity_used|round(2) }} {{ selected_lot.unit }}</td>
+                            <td class="text-end">{{ item.cost|currency }}</td>
+                            <td><span class="badge bg-info">{{ item.batch_status }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted">{{ t('traceability.no_usage', 'This lot has not been used in any batches yet.') }}</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

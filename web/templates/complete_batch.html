@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('complete_batch', default='Complete Batch') }} - {{ batch.batch_number }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>{{ t('complete_batch', default='Complete Batch') }}: {{ batch.batch_number }}</h2>
+        <a href="{{ url_for('production') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> {{ t('back', default='Back') }}
+        </a>
+    </div>
+
+    <!-- Batch Info -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>{{ t('product', default='Product') }}:</strong> {{ batch.product_name }}
+                </div>
+                <div class="col-md-3">
+                    <strong>{{ t('planned_quantity', default='Planned') }}:</strong> {{ batch.planned_quantity }} L
+                </div>
+                <div class="col-md-3">
+                    <strong>{{ t('tank', default='Tank') }}:</strong> {{ batch.tank_name or '-' }}
+                </div>
+                <div class="col-md-3">
+                    <strong>{{ t('status', default='Status') }}:</strong>
+                    <span class="badge bg-warning">{{ batch.status }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Complete Batch Form -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ t('completion_details', default='Completion Details') }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('actual_quantity', default='Actual Quantity (L)') }}
+                                *</label>
+                            <input type="number" step="0.01" name="actual_quantity" class="form-control"
+                                value="{{ batch.planned_quantity }}" required>
+                            <div class="form-text">{{ t('actual_quantity_help', default='Final volume after
+                                fermentation') }}</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('abv', default='ABV (%)') }}</label>
+                            <input type="number" step="0.01" name="abv" class="form-control"
+                                value="{{ batch.abv or '' }}" placeholder="e.g., 5.2">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('ibu', default='IBU') }}</label>
+                            <input type="number" step="0.1" name="ibu" class="form-control"
+                                value="{{ batch.ibu or '' }}" placeholder="e.g., 35">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('srm', default='SRM (Color)') }}</label>
+                            <input type="number" step="0.1" name="srm" class="form-control"
+                                value="{{ batch.srm or '' }}" placeholder="e.g., 8.5">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('notes', default='Notes') }}</label>
+                            <textarea name="notes" class="form-control" rows="3">{{ batch.notes or '' }}</textarea>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check"></i> {{ t('complete_batch', default='Complete Batch') }}
+                            </button>
+                            <a href="{{ url_for('production') }}" class="btn btn-outline-secondary">
+                                {{ t('cancel', default='Cancel') }}
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- COGS Summary -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ t('cogs_summary', default='COGS Summary') }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if cogs_summary.totals %}
+                    <table class="table table-borderless">
+                        <tr>
+                            <th>{{ t('total_cost', default='Total Cost') }}:</th>
+                            <td class="text-end">{{ cogs_summary.totals.total_actual or 0 | currency }}</td>
+                        </tr>
+                    </table>
+
+                    <hr>
+
+                    <h6>{{ t('by_category', default='By Category') }}:</h6>
+                    {% for cat in cogs_summary.categories %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>{{ t(cat.category, default=cat.category) }}:</span>
+                        <span>{{ cat.actual_total or 0 | currency }}</span>
+                    </div>
+                    {% endfor %}
+
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle"></i>
+                        {{ t('complete_batch_info', default='After completing, you can transfer this batch to finished
+                        goods inventory.') }}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        {{ t('no_cogs_warning', default='No COGS data recorded. Consider adding COGS items before
+                        completing.') }}
+                        <a href="{{ url_for('batch_cogs', batch_id=batch.id) }}" class="alert-link">
+                            {{ t('add_cogs', default='Add COGS') }}
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

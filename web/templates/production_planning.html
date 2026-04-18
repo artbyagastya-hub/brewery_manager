@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('production_planning', 'Production Planning') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="fas fa-calendar-alt text-primary me-2"></i>
+            {{ t('production_planning', 'Production Planning') }}
+        </h1>
+        <div class="btn-group">
+            <a href="{{ url_for('add_schedule') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> {{ t('add_schedule', 'Add Schedule') }}
+            </a>
+            <a href="{{ url_for('capacity_planning') }}" class="btn btn-outline-primary">
+                <i class="fas fa-chart-bar me-1"></i> {{ t('capacity_planning', 'Capacity Planning') }}
+            </a>
+        </div>
+    </div>
+
+    <!-- Month Navigation -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3 align-items-center">
+                <div class="col-auto">
+                    <label class="form-label mb-0">{{ t('month', 'Month') }}:</label>
+                </div>
+                <div class="col-auto">
+                    <input type="month" name="month" class="form-control" value="{{ current_month }}">
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="fas fa-search me-1"></i> {{ t('view', 'View') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Capacity Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">{{ t('total_capacity', 'Total Capacity') }}</h6>
+                    <h3 class="mb-0">{{ capacity.total_capacity|round|int }} L</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-title">{{ t('available_capacity', 'Available') }}</h6>
+                    <h3 class="mb-0">{{ capacity.available_capacity|round|int }} L</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <h6 class="card-title">{{ t('planned_capacity', 'Planned') }}</h6>
+                    <h3 class="mb-0">{{ capacity.used_capacity|round|int }} L</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6 class="card-title">{{ t('utilization', 'Utilization') }}</h6>
+                    <h3 class="mb-0">{{ capacity.utilization_percent|round|int }}%</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule Calendar -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-calendar me-2"></i>
+                {{ t('monthly_schedule', 'Monthly Schedule') }}
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>{{ t('date', 'Date') }}</th>
+                            <th>{{ t('product', 'Product') }}</th>
+                            <th>{{ t('tank', 'Tank') }}</th>
+                            <th>{{ t('quantity', 'Quantity') }}</th>
+                            <th>{{ t('status', 'Status') }}</th>
+                            <th>{{ t('actions', 'Actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in schedule %}
+                        <tr>
+                            <td>{{ entry.schedule_date }}</td>
+                            <td>{{ entry.product_name }}</td>
+                            <td>{{ entry.tank_name or '-' }}</td>
+                            <td>{{ entry.planned_quantity }} L</td>
+                            <td>
+                                <span
+                                    class="badge bg-{{ 'success' if entry.status == 'completed' else 'warning' if entry.status == 'planned' else 'secondary' }}">
+                                    {{ entry.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <form method="POST"
+                                    action="{{ url_for('update_schedule_status', schedule_id=entry.id) }}"
+                                    class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <select name="status" class="form-select form-select-sm d-inline-block w-auto"
+                                        onchange="this.form.submit()">
+                                        <option value="planned" {{ 'selected' if entry.status=='planned' }}>Planned
+                                        </option>
+                                        <option value="in_progress" {{ 'selected' if entry.status=='in_progress' }}>In
+                                            Progress</option>
+                                        <option value="completed" {{ 'selected' if entry.status=='completed' }}>
+                                            Completed</option>
+                                        <option value="cancelled" {{ 'selected' if entry.status=='cancelled' }}>
+                                            Cancelled</option>
+                                    </select>
+                                </form>
+                                <form method="POST" action="{{ url_for('delete_schedule', schedule_id=entry.id) }}"
+                                    class="d-inline" onsubmit="return confirm('Delete this schedule entry?')">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not schedule %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">{{ t('no_schedule_entries', 'No schedule
+                                entries for this month') }}</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

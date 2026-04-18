@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('auth.profile', 'Profile') }} - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="fas fa-user me-2"></i>{{ t('auth.profile', 'Profile') }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-center">
+                            <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center"
+                                style="width: 100px; height: 100px; font-size: 2.5rem;">
+                                {{ user.username[0].upper() }}
+                            </div>
+                            <h5 class="mt-3">{{ user.full_name or user.username }}</h5>
+                            <span class="badge bg-primary">{{ user.role }}</span>
+                        </div>
+                        <div class="col-md-8">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th width="30%">{{ t('auth.username', 'Username') }}:</th>
+                                    <td>{{ user.username }}</td>
+                                </tr>
+                                <tr>
+                                    <th>{{ t('auth.full_name', 'Full Name') }}:</th>
+                                    <td>{{ user.full_name or '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>{{ t('auth.email', 'Email') }}:</th>
+                                    <td>{{ user.email or '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>{{ t('auth.role', 'Role') }}:</th>
+                                    <td>
+                                        <span
+                                            class="badge bg-{% if user.role == 'admin' %}danger{% elif user.role == 'manager' %}warning{% elif user.role == 'brewer' %}info{% else %}secondary{% endif %}">
+                                            {{ user.role }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>{{ t('auth.last_login', 'Last Login') }}:</th>
+                                    <td>{{ user.last_login or '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>{{ t('auth.created_at', 'Created') }}:</th>
+                                    <td>{{ user.created_at or '-' }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <h5 class="mt-4 mb-3"><i class="fas fa-lock me-2"></i>{{ t('auth.change_password', 'Change
+                        Password') }}</h5>
+                    <form method="POST" action="/profile/password">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="current_password" class="form-label">{{ t('auth.current_password',
+                                        'Current Password') }}</label>
+                                    <input type="password" class="form-control" id="current_password"
+                                        name="current_password" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="new_password" class="form-label">{{ t('auth.new_password', 'New
+                                        Password') }}</label>
+                                    <input type="password" class="form-control" id="new_password" name="new_password"
+                                        required minlength="6">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="confirm_password" class="form-label">{{ t('auth.confirm_password',
+                                        'Confirm Password') }}</label>
+                                    <input type="password" class="form-control" id="confirm_password"
+                                        name="confirm_password" required minlength="6">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>{{ t('auth.update_password', 'Update Password') }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

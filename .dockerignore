@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Database
+*.db
+*.sqlite3
+
+# Backups
+backups/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node (if any)
+node_modules/
+
+# SSL certificates
+ssl/
+
+# Documentation
+*.md
+LICENSE

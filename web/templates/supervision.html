@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('nav.supervision') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-eye"></i> {{ t('nav.supervision') }}</h2>
+        <div class="btn-group">
+            <a href="/supervision/handover/create" class="btn btn-primary">
+                <i class="fas fa-exchange-alt"></i> {{ t('supervision.new_handover') }}
+            </a>
+            <a href="/supervision/sop/create" class="btn btn-success">
+                <i class="fas fa-clipboard-list"></i> {{ t('supervision.new_sop') }}
+            </a>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-4" id="supervisionTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="handovers-tab" data-bs-toggle="tab" data-bs-target="#handovers"
+                type="button">
+                <i class="fas fa-exchange-alt"></i> {{ t('supervision.shift_handovers') }}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="sops-tab" data-bs-toggle="tab" data-bs-target="#sops" type="button">
+                <i class="fas fa-clipboard-list"></i> {{ t('supervision.sops') }}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="performance-tab" data-bs-toggle="tab" data-bs-target="#performance"
+                type="button">
+                <i class="fas fa-chart-line"></i> {{ t('supervision.performance') }}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="training-tab" data-bs-toggle="tab" data-bs-target="#training" type="button">
+                <i class="fas fa-graduation-cap"></i> {{ t('supervision.training') }}
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="supervisionTabContent">
+        <!-- Shift Handovers Tab -->
+        <div class="tab-pane fade show active" id="handovers" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-exchange-alt"></i> {{ t('supervision.recent_handovers') }}
+                </div>
+                <div class="card-body">
+                    {% if handovers %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{{ t('common.date') }}</th>
+                                    <th>{{ t('supervision.shift') }}</th>
+                                    <th>{{ t('supervision.from') }}</th>
+                                    <th>{{ t('supervision.to') }}</th>
+                                    <th>{{ t('supervision.status') }}</th>
+                                    <th>{{ t('common.actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for h in handovers %}
+                                <tr>
+                                    <td>{{ h.shift_date }}</td>
+                                    <td>
+                                        <span
+                                            class="badge bg-{% if h.shift_type == 'morning' %}warning{% elif h.shift_type == 'afternoon' %}info{% else %}dark{% endif %}">
+                                            {{ t('supervision.' + h.shift_type) }}
+                                        </span>
+                                    </td>
+                                    <td>{{ h.from_staff_name or '-' }}</td>
+                                    <td>{{ h.to_staff_name or '-' }}</td>
+                                    <td>
+                                        <span
+                                            class="badge bg-{% if h.status == 'completed' %}success{% else %}secondary{% endif %}">
+                                            {{ t('supervision.' + h.status) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                                            data-bs-target="#handoverModal{{ h.id }}">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">{{ t('common.no_data') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- SOPs Tab -->
+        <div class="tab-pane fade" id="sops" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-clipboard-list"></i> {{ t('supervision.standard_procedures') }}
+                </div>
+                <div class="card-body">
+                    {% if sops %}
+                    <div class="row">
+                        {% for sop in sops %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ sop.title }}</h5>
+                                    <p class="card-text">
+                                        <span class="badge bg-info">{{ sop.category }}</span>
+                                        <span class="badge bg-secondary">v{{ sop.version }}</span>
+                                    </p>
+                                    <p class="card-text small text-muted">{{ sop.content[:100] }}...</p>
+                                </div>
+                                <div class="card-footer">
+                                    <small class="text-muted">{{ t('common.updated') }}: {{ sop.updated_at }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">{{ t('common.no_data') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Tab -->
+        <div class="tab-pane fade" id="performance" role="tabpanel">
+            <div class="d-flex justify-content-end mb-3">
+                <a href="/supervision/performance" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> {{ t('supervision.add_metric') }}
+                </a>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-chart-line"></i> {{ t('supervision.performance_metrics') }}
+                </div>
+                <div class="card-body">
+                    {% if performance %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{{ t('common.date') }}</th>
+                                    <th>{{ t('supervision.category') }}</th>
+                                    <th>{{ t('supervision.metric') }}</th>
+                                    <th>{{ t('supervision.value') }}</th>
+                                    <th>{{ t('supervision.target') }}</th>
+                                    <th>{{ t('supervision.status') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in performance %}
+                                <tr>
+                                    <td>{{ p.metric_date }}</td>
+                                    <td><span class="badge bg-info">{{ p.category }}</span></td>
+                                    <td>{{ p.metric_name }}</td>
+                                    <td>{{ p.value }} {{ p.unit or '' }}</td>
+                                    <td>{{ p.target or '-' }}</td>
+                                    <td>
+                                        {% if p.target %}
+                                        <span
+                                            class="badge bg-{% if p.value >= p.target %}success{% else %}danger{% endif %}">
+                                            {% if p.value >= p.target %}{{ t('supervision.achieved') }}{% else %}{{
+                                            t('supervision.below_target') }}{% endif %}
+                                        </span>
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">{{ t('common.no_data') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Training Tab -->
+        <div class="tab-pane fade" id="training" role="tabpanel">
+            <div class="d-flex justify-content-end mb-3">
+                <a href="/supervision/training" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> {{ t('supervision.add_training') }}
+                </a>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-graduation-cap"></i> {{ t('supervision.training_records') }}
+                </div>
+                <div class="card-body">
+                    {% if training %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{{ t('common.date') }}</th>
+                                    <th>{{ t('staff.name') }}</th>
+                                    <th>{{ t('supervision.topic') }}</th>
+                                    <th>{{ t('supervision.trainer') }}</th>
+                                    <th>{{ t('supervision.duration') }}</th>
+                                    <th>{{ t('supervision.result') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in training %}
+                                <tr>
+                                    <td>{{ record.training_date }}</td>
+                                    <td>{{ record.staff_name }}</td>
+                                    <td>{{ record.topic }}</td>
+                                    <td>{{ record.trainer or '-' }}</td>
+                                    <td>{{ record.duration_hours }} {{ t('supervision.hours', default='hours') }}</td>
+                                    <td>
+                                        <span
+                                            class="badge bg-{% if record.result == 'passed' %}success{% elif record.result == 'failed' %}danger{% else %}secondary{% endif %}">
+                                            {{ record.result or '-' }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">{{ t('common.no_data') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Handover Detail Modals -->
+{% for h in handovers %}
+<div class="modal fade" id="handoverModal{{ h.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ t('supervision.handover_details') }} - {{ h.shift_date }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>{{ t('supervision.production_status') }}</h6>
+                        <p>{{ h.production_status or '-' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>{{ t('supervision.equipment_status') }}</h6>
+                        <p>{{ h.equipment_status or '-' }}</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>{{ t('supervision.quality_notes') }}</h6>
+                        <p>{{ h.quality_notes or '-' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>{{ t('supervision.safety_notes') }}</h6>
+                        <p>{{ h.safety_notes or '-' }}</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <h6>{{ t('supervision.pending_tasks') }}</h6>
+                        <p>{{ h.pending_tasks or '-' }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

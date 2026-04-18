@@ -1,0 +1,158 @@
+<!-- Inventory Report -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h6 class="card-title">{{ t('inventory.total_items', 'Total Items') }}</h6>
+                <h3>{{ report_data.summary.total_items }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h6 class="card-title">{{ t('inventory.total_value', 'Total Value') }}</h6>
+                <h3>{{ report_data.summary.total_value | currency }} VND</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h6 class="card-title">{{ t('inventory.low_stock', 'Low Stock') }}</h6>
+                <h3>{{ report_data.summary.low_stock_count }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-danger">
+            <div class="card-body">
+                <h6 class="card-title">{{ t('inventory.expiring', 'Expiring Soon') }}</h6>
+                <h3>{{ report_data.summary.expiring_count }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">{{ t('inventory.by_category', 'Value by Category') }}</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="categoryChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">{{ t('inventory.category_breakdown', 'Category Breakdown') }}</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>{{ t('common.category', 'Category') }}</th>
+                            <th>{{ t('common.count', 'Count') }}</th>
+                            <th>{{ t('common.value', 'Value') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for category, data in report_data.categories.items() %}
+                        <tr>
+                            <td>{{ category }}</td>
+                            <td>{{ data.count }}</td>
+                            <td>{{ data.value | currency }} VND</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if report_data.low_stock %}
+<div class="card mb-4">
+    <div class="card-header bg-warning text-white">
+        <h5 class="mb-0">{{ t('inventory.low_stock_items', 'Low Stock Items') }}</h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>{{ t('common.name', 'Name') }}</th>
+                    <th>{{ t('common.category', 'Category') }}</th>
+                    <th>{{ t('common.quantity', 'Quantity') }}</th>
+                    <th>{{ t('common.min_quantity', 'Min Quantity') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in report_data.low_stock %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.category }}</td>
+                    <td class="text-danger">{{ item.quantity }}</td>
+                    <td>{{ item.min_quantity }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if report_data.expiring %}
+<div class="card">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">{{ t('inventory.expiring_items', 'Expiring Soon (30 days)') }}</h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>{{ t('common.name', 'Name') }}</th>
+                    <th>{{ t('common.category', 'Category') }}</th>
+                    <th>{{ t('common.quantity', 'Quantity') }}</th>
+                    <th>{{ t('common.expiry_date', 'Expiry Date') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in report_data.expiring %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.category }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td class="text-danger">{{ item.expiry_date }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<script>
+    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+    new Chart(categoryCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ report_data.categories.keys() | list | tojson }},
+        datasets: [{
+            label: '{{ t("inventory.value", "Value") }}',
+            data: {{ report_data.categories.values() | map(attribute = 'value') | list | tojson }},
+        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF']
+            }]
+        },
+        options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+    });
+</script>

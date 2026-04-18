@@ -1,0 +1,584 @@
+/* ==================== MOBILE RESPONSIVE STYLES ==================== */
+
+/* Extra small devices (phones, less than 576px) */
+@media (max-width: 575.98px) {
+
+    /* Typography */
+    body {
+        font-size: 14px;
+    }
+
+    h1,
+    .h1 {
+        font-size: 1.5rem;
+    }
+
+    h2,
+    .h2 {
+        font-size: 1.3rem;
+    }
+
+    h3,
+    .h3 {
+        font-size: 1.1rem;
+    }
+
+    h4,
+    .h4 {
+        font-size: 1rem;
+    }
+
+    h5,
+    .h5 {
+        font-size: 0.95rem;
+    }
+
+    h6,
+    .h6 {
+        font-size: 0.9rem;
+    }
+
+    /* Navbar */
+    .navbar-brand {
+        font-size: 1.1rem !important;
+    }
+
+    .navbar-brand i {
+        font-size: 1rem;
+    }
+
+    .navbar .badge {
+        font-size: 0.65rem;
+        padding: 3px 6px;
+    }
+
+    /* Main content */
+    .main-content {
+        padding: 10px !important;
+    }
+
+    /* Cards */
+    .card {
+        margin-bottom: 10px;
+        border-radius: 8px;
+    }
+
+    .card-body {
+        padding: 12px;
+    }
+
+    .card-header {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+    }
+
+    .card-header i {
+        margin-right: 5px;
+    }
+
+    /* Stat cards */
+    .stat-card .card-body {
+        padding: 10px;
+    }
+
+    .stat-card h6 {
+        font-size: 0.75rem;
+        margin-bottom: 5px;
+    }
+
+    .stat-card h2 {
+        font-size: 1.3rem;
+        margin-bottom: 0;
+    }
+
+    .stat-icon {
+        font-size: 1.8rem;
+    }
+
+    /* Tables */
+    .table {
+        font-size: 0.8rem;
+    }
+
+    .table th,
+    .table td {
+        padding: 6px 8px;
+        white-space: nowrap;
+    }
+
+    .table-responsive {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+    }
+
+    /* Buttons */
+    .btn {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+
+    .btn-sm {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+    }
+
+    .btn-lg {
+        padding: 10px 20px;
+        font-size: 0.9rem;
+    }
+
+    /* Forms */
+    .form-control,
+    .form-select {
+        font-size: 0.9rem;
+        padding: 6px 10px;
+    }
+
+    .form-label {
+        font-size: 0.85rem;
+        margin-bottom: 4px;
+    }
+
+    .form-text {
+        font-size: 0.75rem;
+    }
+
+    /* Badges */
+    .badge {
+        font-size: 0.7rem;
+        padding: 3px 6px;
+    }
+
+    /* Alerts */
+    .alert {
+        padding: 10px 12px;
+        font-size: 0.85rem;
+    }
+
+    /* Tank visualization */
+    .tank-container {
+        margin: 5px;
+    }
+
+    .tank-large {
+        width: 100px !important;
+        height: auto !important;
+    }
+
+    .unitank-wrapper.tank-large .unitank-svg {
+        width: 80px !important;
+        height: 120px !important;
+    }
+
+    .tank-medium {
+        width: 80px !important;
+        height: auto !important;
+    }
+
+    .unitank-wrapper.tank-medium .unitank-svg {
+        width: 60px !important;
+        height: 90px !important;
+    }
+
+    .tank-small {
+        width: 60px !important;
+        height: auto !important;
+    }
+
+    .unitank-wrapper.tank-small .unitank-svg {
+        width: 40px !important;
+        height: 60px !important;
+    }
+
+    .tank-header {
+        font-size: 0.65rem !important;
+        padding: 3px !important;
+    }
+
+    .tank-beer-name {
+        font-size: 0.6rem !important;
+    }
+
+    .tank-info {
+        font-size: 0.55rem !important;
+    }
+
+    .tank-empty-label {
+        font-size: 0.65rem !important;
+    }
+
+    /* Charts */
+    canvas {
+        max-height: 200px !important;
+    }
+
+    /* Quick actions */
+    .btn-outline-primary,
+    .btn-outline-secondary {
+        font-size: 0.75rem;
+        padding: 5px 10px;
+    }
+
+    /* Modal */
+    .modal-dialog {
+        margin: 10px;
+    }
+
+    .modal-content {
+        border-radius: 10px;
+    }
+
+    .modal-header {
+        padding: 12px 15px;
+    }
+
+    .modal-body {
+        padding: 15px;
+    }
+
+    .modal-footer {
+        padding: 10px 15px;
+    }
+
+    /* Pagination */
+    .pagination {
+        font-size: 0.8rem;
+    }
+
+    .page-link {
+        padding: 6px 10px;
+    }
+
+    /* Dropdown */
+    .dropdown-menu {
+        font-size: 0.85rem;
+    }
+
+    .dropdown-item {
+        padding: 6px 12px;
+    }
+
+    /* Toast notifications */
+    .toast-container {
+        padding: 10px !important;
+    }
+
+    .toast {
+        font-size: 0.85rem;
+    }
+
+    /* Search box */
+    .search-box input {
+        font-size: 0.85rem;
+        padding: 6px 10px 6px 35px;
+    }
+
+    .search-box i {
+        left: 12px;
+        font-size: 0.85rem;
+    }
+
+    /* Status badges */
+    .status-badge {
+        padding: 3px 8px;
+        font-size: 0.7rem;
+    }
+
+    /* Tabs */
+    .nav-tabs .nav-link {
+        font-size: 0.8rem;
+        padding: 6px 10px;
+    }
+
+    /* Accordion */
+    .accordion-button {
+        font-size: 0.9rem;
+        padding: 10px 15px;
+    }
+
+    .accordion-body {
+        padding: 12px;
+    }
+
+    /* Dashboard specific */
+    .row.mb-4 {
+        margin-bottom: 10px !important;
+    }
+
+    .col-md-3,
+    .col-md-4,
+    .col-md-6,
+    .col-md-8 {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    /* Low stock / Expiring tables */
+    .card .table-sm th,
+    .card .table-sm td {
+        padding: 4px 6px;
+        font-size: 0.75rem;
+    }
+
+    /* Footer spacing */
+    .main-content>.row:last-child {
+        margin-top: 10px;
+    }
+}
+
+/* Small devices (landscape phones, 576px and up) */
+@media (min-width: 576px) and (max-width: 767.98px) {
+    .main-content {
+        padding: 15px !important;
+    }
+
+    .stat-card h2 {
+        font-size: 1.5rem;
+    }
+
+    .stat-icon {
+        font-size: 2rem;
+    }
+
+    .tank-large {
+        width: 120px !important;
+        height: auto !important;
+    }
+
+    .unitank-wrapper.tank-large .unitank-svg {
+        width: 100px !important;
+        height: 150px !important;
+    }
+
+    .tank-medium {
+        width: 95px !important;
+        height: auto !important;
+    }
+
+    .unitank-wrapper.tank-medium .unitank-svg {
+        width: 75px !important;
+        height: 112px !important;
+    }
+
+    .tank-small {
+        width: 70px !important;
+        height: auto !important;
+    }
+
+    .unitank-wrapper.tank-small .unitank-svg {
+        width: 50px !important;
+        height: 75px !important;
+    }
+}
+
+/* Medium devices (tablets, 768px and up) */
+@media (min-width: 768px) and (max-width: 991.98px) {
+    .stat-card h2 {
+        font-size: 1.6rem;
+    }
+
+    .tank-large {
+        width: 130px !important;
+        height: auto !important;
+    }
+
+    .unitank-wrapper.tank-large .unitank-svg {
+        width: 110px !important;
+        height: 165px !important;
+    }
+}
+
+/* Mobile sidebar overlay */
+@media (max-width: 767.98px) {
+
+    /* Show the sidebar column container */
+    .sidebar,
+    .sidebar.col-md-2,
+    nav.sidebar {
+        display: block !important;
+        position: fixed !important;
+        top: 56px;
+        left: -280px;
+        width: 280px !important;
+        max-width: 280px !important;
+        height: calc(100vh - 56px);
+        z-index: 1040;
+        transition: left 0.3s ease;
+        overflow-y: auto;
+        background: white !important;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+        flex: none !important;
+    }
+
+    .sidebar.show,
+    .sidebar.show.col-md-2,
+    nav.sidebar.show {
+        left: 0 !important;
+    }
+
+    .sidebar-backdrop {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1035;
+    }
+
+    .sidebar-backdrop.show {
+        display: block;
+    }
+
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 0 0 100% !important;
+    }
+
+    /* Mobile menu toggle button */
+    .mobile-menu-toggle {
+        display: block !important;
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.3rem;
+        padding: 5px 10px;
+        cursor: pointer;
+        margin-right: 10px;
+    }
+
+    .mobile-menu-toggle:hover {
+        color: rgba(255, 255, 255, 0.8);
+    }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+
+    /* Larger touch targets */
+    .btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .btn-sm {
+        min-height: 36px;
+        min-width: 36px;
+    }
+
+    .nav-link {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+
+    .dropdown-item {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+
+    .form-control,
+    .form-select {
+        min-height: 44px;
+    }
+
+    /* Remove hover effects that don't work well on touch */
+    .stat-card:hover {
+        transform: none;
+    }
+
+    .card:hover {
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+}
+
+/* Print styles */
+@media print {
+
+    .sidebar,
+    .navbar,
+    .btn,
+    .dropdown,
+    .toast-container,
+    .loading-overlay {
+        display: none !important;
+    }
+
+    .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+    }
+}
+
+/* Landscape phone optimization */
+@media (max-height: 500px) and (orientation: landscape) {
+    .navbar {
+        padding: 2px 0;
+    }
+
+    .main-content {
+        padding: 8px !important;
+    }
+
+    .card-body {
+        padding: 8px;
+    }
+
+    .stat-card .card-body {
+        padding: 8px;
+    }
+
+    .stat-card h2 {
+        font-size: 1.2rem;
+    }
+
+    canvas {
+        max-height: 150px !important;
+    }
+}
+
+/* Dark mode support (if needed in future) */
+@media (prefers-color-scheme: dark) {
+    /* Placeholder for dark mode styles */
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .blink {
+        animation: none;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .card {
+        border: 2px solid #000;
+    }
+
+    .btn {
+        border: 2px solid currentColor;
+    }
+
+    .badge {
+        border: 1px solid currentColor;
+    }
+}

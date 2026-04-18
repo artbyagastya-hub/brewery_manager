@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Tank Assignments - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>🏭 Tank Assignments</h2>
+    <div>
+        <a href="{{ url_for('equipment') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> All Equipment
+        </a>
+        <a href="{{ url_for('add_batch') }}" class="btn btn-primary">
+            <i class="bi bi-plus"></i> New Batch
+        </a>
+    </div>
+</div>
+
+<!-- Tank Grid by Size -->
+<h4 class="mb-3">2000L Fermenters</h4>
+<div class="row mb-4">
+    {% for tank in tanks if tank.capacity == 2000 %}
+    <div class="col-md-4 mb-3">
+        <div class="card {% if tank.batch_id %}border-danger{% else %}border-success{% endif %}">
+            <div class="card-body text-center">
+                <!-- Unitank SVG - 2000L (largest) -->
+                <svg viewBox="0 0 120 200" class="mb-2" style="max-width: 100px; height: auto;">
+                    <!-- Dome top -->
+                    <ellipse cx="60" cy="25" rx="35" ry="15"
+                        fill="{% if tank.batch_id %}#dc3545{% else %}#198754{% endif %}" opacity="0.8" />
+                    <!-- Cylindrical body -->
+                    <rect x="25" y="25" width="70" height="100"
+                        fill="{% if tank.batch_id %}#dc3545{% else %}#198754{% endif %}" opacity="0.8" />
+                    <!-- Conical bottom -->
+                    <polygon points="25,125 95,125 75,175 45,175"
+                        fill="{% if tank.batch_id %}#dc3545{% else %}#198754{% endif %}" opacity="0.8" />
+                    <!-- Bottom outlet -->
+                    <rect x="50" y="175" width="20" height="10"
+                        fill="{% if tank.batch_id %}#dc3545{% else %}#198754{% endif %}" />
+                    <!-- Sight glass -->
+                    <rect x="30" y="60" width="8" height="40" fill="#fff" opacity="0.3" />
+                    <!-- Top port -->
+                    <circle cx="60" cy="25" r="8" fill="#fff" opacity="0.3" />
+                    <!-- Sample valve -->
+                    <rect x="82" y="80" width="10" height="6"
+                        fill="{% if tank.batch_id %}#dc3545{% else %}#198754{% endif %}" />
+                </svg>
+                <h5 class="card-title">{{ tank.name }}</h5>
+                {% if tank.batch_id %}
+                <div class="alert alert-danger py-2 mb-2">
+                    <strong>{{ tank.product_name }}</strong><br>
+                    <small>{{ tank.product_style }}</small>
+                </div>
+                <p class="mb-1">
+                    <span class="badge bg-secondary">{{ tank.batch_number }}</span>
+                    <span class="badge bg-warning">{{ tank.batch_status }}</span>
+                </p>
+                <p class="small text-muted mb-2">
+                    {{ tank.planned_quantity }}L planned
+                    {% if tank.actual_quantity %} / {{ tank.actual_quantity }}L actual{% endif %}
+                </p>
+                <p class="small text-muted">Started: {{ tank.start_date }}</p>
+                {% else %}
+                <div class="alert alert-success py-2 mb-2">
+                    <strong>Available</strong>
+                </div>
+                {% if tank.last_cleaned %}
+                <p class="small text-muted">Last cleaned: {{ tank.last_cleaned[:10] }}</p>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<h4 class="mb-3">800L Fermenters</h4>
+<div class="row mb-4">
+    {% for tank in tanks if tank.capacity == 800 %}
+    <div class="col-md-3 mb-3">
+        <div class="card {% if tank.batch_id %}border-danger{% else %}border-success{% endif %}">
+            <div class="card-body text-center">
+                <!-- Unitank SVG - 800L (medium) -->
+                <svg viewBox="0 0 120 200" class="mb-2" style="max-width: 75px; height: auto;">
+                    <!-- Dome top -->
+                    <ellipse cx="60" cy="30" rx="30" ry="12"
+                        fill="{% if tank.batch_id %}#dc3545{% else %}#198754{% endif %}" opacity="0.8" />
+                    <!-- Cylindrical body -->
+                    <rect x="30" y="30" width="60" height="90"
+                        fill="{% if tank.batch_id %}#dc3545{% else %}#198754{% endif %}" opacity="0.8" />
+                    <!-- Conical bottom -->
+                    <polygon points="30,120 90,120 72,165 48,165"
+                        fill="{% if tank.batch_id %}#dc3545{% else %}#198754{% endif %}" opacity="0.8" />
+                    <!-- Bottom outlet -->
+                    <rect x="52" y="165" width="16" height="8"
+                        fill="{% if tank.batch_id %}#dc3545{% else %}#198754{% endif %}" />
+                    <!-- Sight glass -->
+                    <rect x="34" y="55" width="6" height="35" fill="#fff" opacity="0.3" />
+                    <!-- Top port -->
+                    <circle cx="60" cy="30" r="6" fill="#fff" opacity="0.3" />
+                    <!-- Sample valve -->
+                    <rect x="80" y="70" width="8" height="5"
+                        fill="{% if tank.batch_id %}#dc3545{% else %}#198754{% endif %}" />
+                </svg>
+                <h5 class="card-title">{{ tank.name }}</h5>
+                {% if tank.batch_id %}
+                <div class="alert alert-danger py-2 mb-2">
+                    <strong>{{ tank.product_name }}</strong><br>
+                    <small>{{ tank.product_style }}</small>
+                </div>
+                <p class="mb-1">
+                    <span class="badge bg-secondary">{{ tank.batch_number }}</span>
+                    <span class="badge bg-warning">{{ tank.batch_status }}</span>
+                </p>
+                <p class="small text-muted mb-2">
+                    {{ tank.planned_quantity }}L planned
+                </p>
+                <p class="small text-muted">Started: {{ tank.start_date }}</p>
+                {% else %}
+                <div class="alert alert-success py-2 mb-2">
+                    <strong>Available</strong>
+                </div>
+                {% if tank.last_cleaned %}
+                <p class="small text-muted">Last cleaned: {{ tank.last_cleaned[:10] }}</p>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<h4 class="mb-3">100L Pilot Fermenters</h4>
+<div class="row mb-4">
+    {% for tank in tanks if tank.capacity == 100 %}
+    <div class="col-md-4 mb-3">
+        <div class="card {% if tank.batch_id %}border-danger{% else %}border-success{% endif %}">
+            <div class="card-body text-center">
+                <!-- Unitank SVG - 100L (smallest) -->
+                <svg viewBox="0 0 120 200" class="mb-2" style="max-width: 55px; height: auto;">
+                    <!-- Dome top -->
+                    <ellipse cx="60" cy="35" rx="25" ry="10"
+                        fill="{% if tank.batch_id %}#dc3545{% else %}#198754{% endif %}" opacity="0.8" />
+                    <!-- Cylindrical body -->
+                    <rect x="35" y="35" width="50" height="80"
+                        fill="{% if tank.batch_id %}#dc3545{% else %}#198754{% endif %}" opacity="0.8" />
+                    <!-- Conical bottom -->
+                    <polygon points="35,115 85,115 70,155 50,155"
+                        fill="{% if tank.batch_id %}#dc3545{% else %}#198754{% endif %}" opacity="0.8" />
+                    <!-- Bottom outlet -->
+                    <rect x="54" y="155" width="12" height="6"
+                        fill="{% if tank.batch_id %}#dc3545{% else %}#198754{% endif %}" />
+                    <!-- Sight glass -->
+                    <rect x="39" y="50" width="5" height="30" fill="#fff" opacity="0.3" />
+                    <!-- Top port -->
+                    <circle cx="60" cy="35" r="5" fill="#fff" opacity="0.3" />
+                    <!-- Sample valve -->
+                    <rect x="76" y="65" width="7" height="4"
+                        fill="{% if tank.batch_id %}#dc3545{% else %}#198754{% endif %}" />
+                </svg>
+                <h5 class="card-title">{{ tank.name }}</h5>
+                {% if tank.batch_id %}
+                <div class="alert alert-danger py-2 mb-2">
+                    <strong>{{ tank.product_name }}</strong><br>
+                    <small>{{ tank.product_style }}</small>
+                </div>
+                <p class="mb-1">
+                    <span class="badge bg-secondary">{{ tank.batch_number }}</span>
+                    <span class="badge bg-warning">{{ tank.batch_status }}</span>
+                </p>
+                <p class="small text-muted mb-2">
+                    {{ tank.planned_quantity }}L planned
+                </p>
+                <p class="small text-muted">Started: {{ tank.start_date }}</p>
+                {% else %}
+                <div class="alert alert-success py-2 mb-2">
+                    <strong>Available</strong>
+                </div>
+                {% if tank.last_cleaned %}
+                <p class="small text-muted">Last cleaned: {{ tank.last_cleaned[:10] }}</p>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Legend -->
+<div class="card mt-4">
+    <div class="card-body">
+        <h6>Legend</h6>
+        <span class="badge bg-success me-2">Available</span>
+        <span class="badge bg-danger me-2">In Use</span>
+        <span class="badge bg-warning">Maintenance</span>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,710 @@
+{% extends "base.html" %}
+
+{% block title %}AI Planning Center{% endblock %}
+
+{% block head %}
+<link href="/static/ai_dashboard.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-project-diagram"></i> {{ t('ai_planning_center', default='AI Planning Center') }}
+                </h2>
+                <div>
+                    <button class="btn btn-primary" onclick="showCreatePlanModal()">
+                        <i class="fas fa-plus"></i> {{ t('create_plan', default='Create Plan') }}
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="loadPlanTemplates()">
+                        <i class="fas fa-file-alt"></i> {{ t('templates', default='Templates') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Plan Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6>{{ t('active_plans', default='Active Plans') }}</h6>
+                    <h2 id="activePlansCount">{{ active_plans|length }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6>{{ t('completed_this_week', default='Completed This Week') }}</h6>
+                    <h2 id="completedCount">{{ completed_this_week|default(0) }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <h6>{{ t('pending_approval', default='Pending Approval') }}</h6>
+                    <h2 id="pendingCount">{{ pending_approval|length }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6>{{ t('success_rate', default='Success Rate') }}</h6>
+                    <h2 id="successRate">{{ success_rate|default('N/A') }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Plan Views Toggle -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="btn-group" role="group">
+                <button class="btn btn-outline-primary active" onclick="switchView('gantt')" id="ganttBtn">
+                    <i class="fas fa-chart-gantt"></i> {{ t('gantt_view', default='Gantt View') }}
+                </button>
+                <button class="btn btn-outline-primary" onclick="switchView('list')" id="listBtn">
+                    <i class="fas fa-list"></i> {{ t('list_view', default='List View') }}
+                </button>
+                <button class="btn btn-outline-primary" onclick="switchView('board')" id="boardBtn">
+                    <i class="fas fa-columns"></i> {{ t('board_view', default='Board View') }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gantt Chart View -->
+    <div class="row mb-4" id="ganttView">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-gantt"></i> {{ t('plan_timeline', default='Plan Timeline')
+                        }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="gantt-container" style="overflow-x: auto;">
+                        <div class="gantt-chart" id="ganttChart">
+                            <!-- Gantt header - dates -->
+                            <div class="gantt-header d-flex border-bottom pb-2 mb-2">
+                                <div class="gantt-label" style="width: 200px; min-width: 200px;">
+                                    <strong>{{ t('plan', default='Plan') }}</strong>
+                                </div>
+                                <div class="gantt-dates d-flex flex-grow-1" id="ganttDates">
+                                    <!-- Dynamic dates will be inserted here -->
+                                </div>
+                            </div>
+                            <!-- Gantt rows -->
+                            <div id="ganttRows">
+                                {% if active_plans %}
+                                {% for plan in active_plans %}
+                                <div class="gantt-row d-flex align-items-center border-bottom py-2">
+                                    <div class="gantt-label" style="width: 200px; min-width: 200px;">
+                                        <strong>{{ plan.goal_description|default('Plan #' ~ plan.id) }}</strong>
+                                        <br><small class="text-muted">{{ plan.goal_type }}</small>
+                                    </div>
+                                    <div class="gantt-bars d-flex flex-grow-1 position-relative" style="height: 30px;">
+                                        <div class="gantt-bar position-absolute rounded"
+                                            style="left: {{ plan.start_offset|default(0) }}%; width: {{ plan.duration|default(20) }}%; background: {{ plan.color|default('#007bff') }}; height: 24px; top: 3px;"
+                                            title="{{ plan.goal_description }}">
+                                            <span class="text-white small px-2">{{ plan.progress|default(0) }}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                {% else %}
+                                <div class="text-center text-muted p-4">
+                                    <i class="fas fa-project-diagram fa-2x mb-2"></i>
+                                    <p>{{ t('no_active_plans_gantt', default='No active plans to display') }}</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- List View (hidden by default) -->
+    <div class="row mb-4 d-none" id="listView">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-list"></i> {{ t('all_plans', default='All Plans') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="plansTable">
+                            <thead>
+                                <tr>
+                                    <th>{{ t('id', default='ID') }}</th>
+                                    <th>{{ t('goal', default='Goal') }}</th>
+                                    <th>{{ t('type', default='Type') }}</th>
+                                    <th>{{ t('status', default='Status') }}</th>
+                                    <th>{{ t('progress', default='Progress') }}</th>
+                                    <th>{{ t('created', default='Created') }}</th>
+                                    <th>{{ t('actions', default='Actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if all_plans %}
+                                {% for plan in all_plans %}
+                                <tr>
+                                    <td>#{{ plan.id }}</td>
+                                    <td><strong>{{ plan.goal_description|default('Unnamed Plan') }}</strong></td>
+                                    <td><span class="badge badge-info">{{ plan.goal_type }}</span></td>
+                                    <td>
+                                        <span
+                                            class="badge badge-{% if plan.status == 'active' %}success{% elif plan.status == 'completed' %}primary{% elif plan.status == 'paused' %}warning{% else %}secondary{% endif %}">
+                                            {{ plan.status|upper }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 10px; width: 100px;">
+                                            <div class="progress-bar" style="width: {{ plan.progress|default(0) }}%">
+                                            </div>
+                                        </div>
+                                        <small>{{ plan.progress|default(0) }}%</small>
+                                    </td>
+                                    <td><small>{{ plan.created_at }}</small></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary"
+                                            onclick="viewPlanDetails({{ plan.id }})">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-warning"
+                                            onclick="editPlan({{ plan.id }})">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        {% if plan.status == 'active' %}
+                                        <button class="btn btn-sm btn-outline-danger"
+                                            onclick="pausePlan({{ plan.id }})">
+                                            <i class="fas fa-pause"></i>
+                                        </button>
+                                        {% elif plan.status == 'paused' %}
+                                        <button class="btn btn-sm btn-outline-success"
+                                            onclick="resumePlan({{ plan.id }})">
+                                            <i class="fas fa-play"></i>
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted">{{ t('no_plans', default='No plans
+                                        found') }}</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Board View (hidden by default) -->
+    <div class="row mb-4 d-none" id="boardView">
+        <div class="col-md-4">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">{{ t('pending', default='Pending') }}</h6>
+                </div>
+                <div class="card-body" style="min-height: 300px;" id="pendingColumn">
+                    {% if pending_plans %}
+                    {% for plan in pending_plans %}
+                    <div class="card mb-2 plan-card" data-plan-id="{{ plan.id }}">
+                        <div class="card-body p-2">
+                            <h6 class="card-title mb-1">{{ plan.goal_description|default('Plan #' ~ plan.id) }}</h6>
+                            <small class="text-muted">{{ plan.goal_type }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">{{ t('in_progress', default='In Progress') }}</h6>
+                </div>
+                <div class="card-body" style="min-height: 300px;" id="activeColumn">
+                    {% if active_plans %}
+                    {% for plan in active_plans %}
+                    <div class="card mb-2 plan-card" data-plan-id="{{ plan.id }}">
+                        <div class="card-body p-2">
+                            <h6 class="card-title mb-1">{{ plan.goal_description|default('Plan #' ~ plan.id) }}</h6>
+                            <small class="text-muted">{{ plan.goal_type }} - {{ plan.progress|default(0) }}%</small>
+                            <div class="progress mt-1" style="height: 5px;">
+                                <div class="progress-bar" style="width: {{ plan.progress|default(0) }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">{{ t('completed', default='Completed') }}</h6>
+                </div>
+                <div class="card-body" style="min-height: 300px;" id="completedColumn">
+                    {% if completed_plans %}
+                    {% for plan in completed_plans %}
+                    <div class="card mb-2 plan-card" data-plan-id="{{ plan.id }}">
+                        <div class="card-body p-2">
+                            <h6 class="card-title mb-1">{{ plan.goal_description|default('Plan #' ~ plan.id) }}</h6>
+                            <small class="text-muted">{{ plan.goal_type }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Approval Section -->
+    {% if pending_approval %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-clock"></i> {{ t('pending_approval', default='Pending Approval')
+                        }}</h5>
+                </div>
+                <div class="card-body">
+                    {% for plan in pending_approval %}
+                    <div class="d-flex justify-content-between align-items-center border-bottom py-3">
+                        <div>
+                            <h6 class="mb-1">{{ plan.goal_description|default('Plan #' ~ plan.id) }}</h6>
+                            <p class="text-muted mb-0">{{ plan.reasoning|default('AI-generated improvement plan') }}</p>
+                            <small class="text-info">
+                                <i class="fas fa-lightbulb"></i> {{ plan.expected_impact|default('Expected to improve
+                                efficiency') }}
+                            </small>
+                        </div>
+                        <div>
+                            <button class="btn btn-success btn-sm me-2" onclick="approvePlan({{ plan.id }})">
+                                <i class="fas fa-check"></i> {{ t('approve', default='Approve') }}
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="viewPlanDetails({{ plan.id }})">
+                                <i class="fas fa-eye"></i> {{ t('details', default='Details') }}
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Plan Templates -->
+    <div class="row mb-4" id="templatesSection" style="display: none;">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-file-alt"></i> {{ t('plan_templates', default='Plan Templates') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 border-primary template-card"
+                                onclick="useTemplate('production_optimization')">
+                                <div class="card-body">
+                                    <h6><i class="fas fa-industry text-primary"></i> {{ t('production_optimization',
+                                        default='Production Optimization') }}</h6>
+                                    <p class="small text-muted">{{ t('production_opt_desc', default='Optimize brewing
+                                        schedule, reduce waste, improve throughput') }}</p>
+                                    <span class="badge badge-primary">{{ t('common', default='Common') }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 border-success template-card"
+                                onclick="useTemplate('cost_reduction')">
+                                <div class="card-body">
+                                    <h6><i class="fas fa-dollar-sign text-success"></i> {{ t('cost_reduction',
+                                        default='Cost Reduction') }}</h6>
+                                    <p class="small text-muted">{{ t('cost_reduction_desc', default='Identify savings,
+                                        optimize purchasing, reduce overhead') }}</p>
+                                    <span class="badge badge-success">{{ t('high_impact', default='High Impact')
+                                        }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 border-info template-card"
+                                onclick="useTemplate('quality_improvement')">
+                                <div class="card-body">
+                                    <h6><i class="fas fa-award text-info"></i> {{ t('quality_improvement',
+                                        default='Quality Improvement') }}</h6>
+                                    <p class="small text-muted">{{ t('quality_improvement_desc', default='Enhance
+                                        consistency, improve QC processes, reduce defects') }}</p>
+                                    <span class="badge badge-info">{{ t('ongoing', default='Ongoing') }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 border-warning template-card"
+                                onclick="useTemplate('inventory_optimization')">
+                                <div class="card-body">
+                                    <h6><i class="fas fa-boxes text-warning"></i> {{ t('inventory_optimization',
+                                        default='Inventory Optimization') }}</h6>
+                                    <p class="small text-muted">{{ t('inventory_opt_desc', default='Balance stock
+                                        levels, reduce waste, improve turnover') }}</p>
+                                    <span class="badge badge-warning">{{ t('reactive', default='Reactive') }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 border-danger template-card" onclick="useTemplate('sales_growth')">
+                                <div class="card-body">
+                                    <h6><i class="fas fa-chart-line text-danger"></i> {{ t('sales_growth',
+                                        default='Sales Growth') }}</h6>
+                                    <p class="small text-muted">{{ t('sales_growth_desc', default='Expand customer base,
+                                        increase orders, launch promotions') }}</p>
+                                    <span class="badge badge-danger">{{ t('proactive', default='Proactive') }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 border-secondary template-card"
+                                onclick="useTemplate('maintenance_prevention')">
+                                <div class="card-body">
+                                    <h6><i class="fas fa-wrench text-secondary"></i> {{ t('maintenance_prevention',
+                                        default='Preventive Maintenance') }}</h6>
+                                    <p class="small text-muted">{{ t('maintenance_desc', default='Schedule maintenance,
+                                        prevent breakdowns, extend equipment life') }}</p>
+                                    <span class="badge badge-secondary">{{ t('scheduled', default='Scheduled') }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Plan Modal -->
+<div class="modal fade" id="createPlanModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus"></i> {{ t('create_new_plan', default='Create New Plan')
+                    }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createPlanForm">
+                    <div class="mb-3">
+                        <label class="form-label">{{ t('goal_description', default='Goal Description') }}</label>
+                        <input type="text" class="form-control" id="planGoal" required
+                            placeholder="{{ t('goal_placeholder', default='e.g., Reduce production costs by 10%') }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ t('goal_type', default='Goal Type') }}</label>
+                        <select class="form-select" id="planType" required>
+                            <option value="optimize_production">{{ t('optimize_production', default='Optimize
+                                Production') }}</option>
+                            <option value="reduce_costs">{{ t('reduce_costs', default='Reduce Costs') }}</option>
+                            <option value="improve_quality">{{ t('improve_quality', default='Improve Quality') }}
+                            </option>
+                            <option value="increase_sales">{{ t('increase_sales', default='Increase Sales') }}</option>
+                            <option value="fix_issues">{{ t('fix_issues', default='Fix Issues') }}</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ t('priority', default='Priority') }}</label>
+                        <select class="form-select" id="planPriority">
+                            <option value="1">{{ t('critical', default='Critical') }}</option>
+                            <option value="3">{{ t('high', default='High') }}</option>
+                            <option value="5" selected>{{ t('normal', default='Normal') }}</option>
+                            <option value="7">{{ t('low', default='Low') }}</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ t('constraints', default='Constraints (Optional)') }}</label>
+                        <textarea class="form-control" id="planConstraints" rows="2"
+                            placeholder="{{ t('constraints_placeholder', default='e.g., Budget limit: $5000, Deadline: end of month') }}"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="autoApprove">
+                            <label class="form-check-label">
+                                {{ t('auto_approve', default='Auto-approve safe actions') }}
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('cancel', default='Cancel')
+                    }}</button>
+                <button type="button" class="btn btn-primary" onclick="createPlan()">
+                    <i class="fas fa-plus"></i> {{ t('create_plan', default='Create Plan') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Plan Details Modal -->
+<div class="modal fade" id="planDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-tasks"></i> {{ t('plan_details', default='Plan Details') }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="planDetailsContent">
+                <!-- Plan details will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/ai_dashboard.js"></script>
+<script>
+    // View switching
+    function switchView(view) {
+        document.getElementById('ganttView').classList.add('d-none');
+        document.getElementById('listView').classList.add('d-none');
+        document.getElementById('boardView').classList.add('d-none');
+        document.getElementById(view + 'View').classList.remove('d-none');
+
+        document.getElementById('ganttBtn').classList.remove('active');
+        document.getElementById('listBtn').classList.remove('active');
+        document.getElementById('boardBtn').classList.remove('active');
+        document.getElementById(view + 'Btn').classList.add('active');
+    }
+
+    // Load plan templates
+    function loadPlanTemplates() {
+        const section = document.getElementById('templatesSection');
+        section.style.display = section.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // Use template
+    function useTemplate(templateType) {
+        const templates = {
+            'production_optimization': {
+                goal: 'Optimize production efficiency',
+                type: 'optimize_production',
+                constraints: 'Maintain current product quality standards'
+            },
+            'cost_reduction': {
+                goal: 'Reduce operational costs by 10%',
+                type: 'reduce_costs',
+                constraints: 'No reduction in product quality'
+            },
+            'quality_improvement': {
+                goal: 'Improve product quality consistency',
+                type: 'improve_quality',
+                constraints: 'Within current budget'
+            },
+            'inventory_optimization': {
+                goal: 'Optimize inventory levels',
+                type: 'reduce_costs',
+                constraints: 'Maintain minimum stock for all products'
+            },
+            'sales_growth': {
+                goal: 'Increase sales by 15%',
+                type: 'increase_sales',
+                constraints: 'Focus on existing customer base'
+            },
+            'maintenance_prevention': {
+                goal: 'Implement preventive maintenance schedule',
+                type: 'fix_issues',
+                constraints: 'Minimal production disruption'
+            }
+        };
+
+        const template = templates[templateType];
+        if (template) {
+            document.getElementById('planGoal').value = template.goal;
+            document.getElementById('planType').value = template.type;
+            document.getElementById('planConstraints').value = template.constraints;
+            showCreatePlanModal();
+        }
+    }
+
+    // Show create plan modal
+    function showCreatePlanModal() {
+        new bootstrap.Modal(document.getElementById('createPlanModal')).show();
+    }
+
+    // Create plan
+    async function createPlan() {
+        const goal = document.getElementById('planGoal').value;
+        const type = document.getElementById('planType').value;
+        const priority = document.getElementById('planPriority').value;
+        const constraints = document.getElementById('planConstraints').value;
+        const autoApprove = document.getElementById('autoApprove').checked;
+
+        if (!goal) {
+            alert('{{ t("please_enter_goal", default="Please enter a goal description") }}');
+            return;
+        }
+
+        try {
+            const response = await fetch('/ai/planning/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    goal: goal,
+                    goal_type: type,
+                    priority: parseInt(priority),
+                    constraints: constraints,
+                    auto_approve: autoApprove
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                alert('{{ t("plan_created", default="Plan created successfully!") }}');
+                location.reload();
+            } else {
+                alert('{{ t("plan_creation_failed", default="Failed to create plan") }}: ' + data.error);
+            }
+        } catch (error) {
+            alert('{{ t("error", default="Error") }}: ' + error.message);
+        }
+    }
+
+    // View plan details
+    async function viewPlanDetails(planId) {
+        try {
+            const response = await fetch('/ai/planning/active?plan_id=' + planId);
+            const data = await response.json();
+
+            if (data.success) {
+                const content = document.getElementById('planDetailsContent');
+                content.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h5>${data.plan.goal_description || 'Plan #' + data.plan.id}</h5>
+                            <p class="text-muted">${data.plan.goal_type}</p>
+                            
+                            <h6 class="mt-4">{{ t('tasks', default='Tasks') }}</h6>
+                            <div class="list-group">
+                                ${data.tasks.map(task => `
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <span class="badge badge-${task.status === 'completed' ? 'success' : task.status === 'in_progress' ? 'primary' : 'secondary'}">
+                                                ${task.status}
+                                            </span>
+                                            ${task.task_description}
+                                        </div>
+                                        <small class="text-muted">${task.scheduled_at || ''}</small>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6>{{ t('progress', default='Progress') }}</h6>
+                                    <div class="progress mb-3" style="height: 20px;">
+                                        <div class="progress-bar" style="width: ${data.progress || 0}%">
+                                            ${data.progress || 0}%
+                                        </div>
+                                    </div>
+                                    <p><strong>{{ t('status', default='Status') }}:</strong> ${data.plan.status}</p>
+                                    <p><strong>{{ t('created', default='Created') }}:</strong> ${data.plan.created_at}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                new bootstrap.Modal(document.getElementById('planDetailsModal')).show();
+            }
+        } catch (error) {
+            alert('{{ t("error", default="Error") }}: ' + error.message);
+        }
+    }
+
+    // Pause plan
+    async function pausePlan(planId) {
+        if (!confirm('{{ t("confirm_pause", default="Pause this plan?") }}')) return;
+
+        try {
+            const response = await fetch('/ai/planning/stop', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ plan_id: planId })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                location.reload();
+            }
+        } catch (error) {
+            alert('{{ t("error", default="Error") }}: ' + error.message);
+        }
+    }
+
+    // Approve plan
+    async function approvePlan(planId) {
+        if (!confirm('{{ t("confirm_approve", default="Approve this plan?") }}')) return;
+
+        try {
+            const response = await fetch('/ai/planning/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ plan_id: planId, action: 'approve' })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                location.reload();
+            }
+        } catch (error) {
+            alert('{{ t("error", default="Error") }}: ' + error.message);
+        }
+    }
+
+    // Initialize Gantt chart dates
+    function initGanttDates() {
+        const datesContainer = document.getElementById('ganttDates');
+        const today = new Date();
+        let html = '';
+
+        for (let i = 0; i < 14; i++) {
+            const date = new Date(today);
+            date.setDate(date.getDate() + i);
+            const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+            const dayNum = date.getDate();
+            html += `<div class="text-center" style="width: calc(100% / 14); min-width: 50px;">
+                <small>${dayName}</small><br>
+                <strong>${dayNum}</strong>
+            </div>`;
+        }
+
+        datesContainer.innerHTML = html;
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        initGanttDates();
+    });
+</script>
+{% endblock %}

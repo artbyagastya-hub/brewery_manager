@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Add Order - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-plus me-2"></i>New Sales Order</h2>
+    <a href="/sales" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i>Back</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Order Number *</label>
+                    <input type="text" name="order_number" class="form-control" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Customer *</label>
+                    <select name="customer_id" class="form-select" required>
+                        <option value="">Select Customer</option>
+                        {% for c in customers %}
+                        <option value="{{ c.id }}">{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Order Date *</label>
+                    <input type="date" name="order_date" class="form-control" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Delivery Date</label>
+                    <input type="date" name="delivery_date" class="form-control">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Status *</label>
+                    <select name="status" class="form-select" required>
+                        <option value="pending">Pending</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Total Amount (VND) *</label>
+                    <input type="number" step="0.01" name="total_amount" class="form-control" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Payment Status</label>
+                    <select name="payment_status" class="form-select">
+                        <option value="unpaid">Unpaid</option>
+                        <option value="partial">Partial</option>
+                        <option value="paid">Paid</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Notes</label>
+                <textarea name="notes" class="form-control" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Save Order</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('import_recipes', default='Import Recipes') }} - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">📥 {{ t('import_recipes', default='Import Recipes') }}</h1>
+        <a href="{{ url_for('recipes') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> {{ t('back_to_recipes', default='Back to Recipes') }}
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ t('import_beersmith', default='Import from BeerSmith') }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <div class="mb-4">
+                            <label for="file" class="form-label">{{ t('select_file', default='Select BeerSmith File
+                                (.bsmx)') }}</label>
+                            <input type="file" class="form-control" id="file" name="file" accept=".bsmx" required>
+                            <div class="form-text">
+                                {{ t('bsmx_help', default='Upload a .bsmx file exported from BeerSmith. The file will be
+                                parsed and recipes will be imported into the system.') }}
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-file-import"></i> {{ t('import', default='Import') }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ t('instructions', default='Instructions') }}</h5>
+                </div>
+                <div class="card-body">
+                    <h6>{{ t('how_to_export', default='How to Export from BeerSmith') }}:</h6>
+                    <ol class="small">
+                        <li>{{ t('bsmx_step1', default='Open BeerSmith on your computer') }}</li>
+                        <li>{{ t('bsmx_step2', default='Go to File > Export > Export to .bsmx') }}</li>
+                        <li>{{ t('bsmx_step3', default='Select the recipes you want to export') }}</li>
+                        <li>{{ t('bsmx_step4', default='Save the .bsmx file') }}</li>
+                        <li>{{ t('bsmx_step5', default='Upload the file here') }}</li>
+                    </ol>
+
+                    <hr>
+
+                    <h6>{{ t('what_imported', default='What will be imported') }}:</h6>
+                    <ul class="small">
+                        <li>{{ t('import_name', default='Recipe name and style') }}</li>
+                        <li>{{ t('import_params', default='Batch size, ABV, IBU, SRM') }}</li>
+                        <li>{{ t('import_fermentables', default='Fermentables (malts, sugars)') }}</li>
+                        <li>{{ t('import_hops', default='Hops with amounts and times') }}</li>
+                        <li>{{ t('import_yeast', default='Yeast strains') }}</li>
+                        <li>{{ t('import_mash', default='Mash steps') }}</li>
+                    </ul>
+
+                    <hr>
+
+                    <div class="alert alert-info small">
+                        <i class="fas fa-info-circle"></i>
+                        {{ t('import_note', default='Recipes will be imported as inactive. You can activate them after
+                        reviewing the details.') }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

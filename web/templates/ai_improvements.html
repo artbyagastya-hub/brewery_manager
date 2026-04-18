@@ -1,0 +1,923 @@
+{% extends "base.html" %}
+
+{% block title %}AI Improvement Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-brain"></i> {{ t('ai_improvements') or 'AI Improvement Dashboard' }}</h2>
+                <div>
+                    <button class="btn btn-primary" onclick="runSystemAnalysis()">
+                        <i class="fas fa-search"></i> Run Analysis
+                    </button>
+                    <button class="btn btn-success" onclick="generateReport()">
+                        <i class="fas fa-chart-line"></i> Generate Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Status & Mood Indicator -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card border-dark">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-robot"></i> {{ t('ai_autonomy_control') or 'AI Autonomy Control'
+                        }}</h5>
+                    <div class="d-flex align-items-center gap-2">
+                        <!-- AI Mood Indicator -->
+                        <div id="aiMoodIndicator" class="d-flex align-items-center px-3 py-1 rounded"
+                            style="background: rgba(255,255,255,0.1);">
+                            <span id="aiMoodEmoji" class="mr-2">😌</span>
+                            <span id="aiMoodText" class="small">Idle</span>
+                        </div>
+                        <span id="aiStatusBadge"
+                            class="badge badge-{% if ai_status == 'active' %}success{% elif ai_status == 'paused' %}warning{% else %}secondary{% endif %} mr-2">
+                            {{ ai_status|default('idle')|upper }}
+                        </span>
+                        <button class="btn btn-sm btn-outline-light" onclick="toggleAIStatus()">
+                            <i class="fas fa-{% if ai_status == 'active' %}pause{% else %}play{% endif %}"
+                                id="toggleIcon"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h6>
+                </div>
+                <div class="card-body p-2">
+                    <div class="d-flex flex-wrap gap-1">
+                        <button class="btn btn-sm btn-outline-primary" onclick="runSystemAnalysis()"
+                            title="Run Analysis">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" onclick="generateReport()"
+                            title="Generate Report">
+                            <i class="fas fa-chart-line"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-info" onclick="scheduleImprovement()"
+                            title="Schedule Improvement">
+                            <i class="fas fa-calendar-plus"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning" onclick="runProactiveScan()"
+                            title="Scan for Opportunities">
+                            <i class="fas fa-radar"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="viewAIHistory()" title="View History">
+                            <i class="fas fa-history"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="emergencyStop()" title="Emergency Stop">
+                            <i class="fas fa-stop-circle"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <label class="font-weight-bold">{{ t('autonomy_level') or 'Autonomy Level' }}</label>
+                <div class="btn-group btn-group-toggle d-flex" data-toggle="buttons">
+                    <label class="btn btn-outline-secondary {% if autonomy_level == 'observer' %}active{% endif %}">
+                        <input type="radio" name="autonomy" value="observer" {% if autonomy_level=='observer'
+                            %}checked{% endif %}>
+                        <i class="fas fa-eye"></i> {{ t('observer') or 'Observer' }}
+                    </label>
+                    <label class="btn btn-outline-info {% if autonomy_level == 'suggester' %}active{% endif %}">
+                        <input type="radio" name="autonomy" value="suggester" {% if autonomy_level=='suggester'
+                            %}checked{% endif %}>
+                        <i class="fas fa-lightbulb"></i> {{ t('suggester') or 'Suggester' }}
+                    </label>
+                    <label class="btn btn-outline-warning {% if autonomy_level == 'actor' %}active{% endif %}">
+                        <input type="radio" name="autonomy" value="actor" {% if autonomy_level=='actor' %}checked{%
+                            endif %}>
+                        <i class="fas fa-bolt"></i> {{ t('actor') or 'Actor' }}
+                    </label>
+                    <label class="btn btn-outline-danger {% if autonomy_level == 'autonomous' %}active{% endif %}">
+                        <input type="radio" name="autonomy" value="autonomous" {% if autonomy_level=='autonomous'
+                            %}checked{% endif %}>
+                        <i class="fas fa-rocket"></i> {{ t('autonomous') or 'Autonomous' }}
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label class="font-weight-bold">{{ t('planning_mode') or 'Planning Mode' }}</label>
+                <div class="btn-group btn-group-toggle d-flex" data-toggle="buttons">
+                    <label class="btn btn-outline-secondary {% if planning_mode == 'reactive' %}active{% endif %}">
+                        <input type="radio" name="planning" value="reactive" {% if planning_mode=='reactive' %}checked{%
+                            endif %}>
+                        {{ t('reactive') or 'Reactive' }}
+                    </label>
+                    <label class="btn btn-outline-info {% if planning_mode == 'proactive' %}active{% endif %}">
+                        <input type="radio" name="planning" value="proactive" {% if planning_mode=='proactive'
+                            %}checked{% endif %}>
+                        {{ t('proactive') or 'Proactive' }}
+                    </label>
+                    <label class="btn btn-outline-primary {% if planning_mode == 'autonomous' %}active{% endif %}">
+                        <input type="radio" name="planning" value="autonomous" {% if planning_mode=='autonomous'
+                            %}checked{% endif %}>
+                        {{ t('auto') or 'Auto' }}
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label class="font-weight-bold">{{ t('quick_stats') or 'Quick Stats' }}</label>
+                <div class="d-flex justify-content-around text-center">
+                    <div>
+                        <h4 class="mb-0 text-primary">{{ active_plans|length or 0 }}</h4>
+                        <small class="text-muted">{{ t('active_plans') or 'Active Plans' }}</small>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 text-success">{{ ai_actions_today|default(0) }}</h4>
+                        <small class="text-muted">{{ t('actions_today') or 'Actions Today' }}</small>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 text-warning">{{ pending_suggestions|length or 0 }}</h4>
+                        <small class="text-muted">{{ t('suggestions') or 'Suggestions' }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+</div>
+
+<!-- AI Activity Feed & Goals Progress -->
+<div class="row mb-4">
+    <!-- Real-time Activity Feed -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-stream"></i> {{ t('ai_activity_feed') or 'AI Activity Feed' }}
+                </h5>
+                <span class="badge badge-light" id="activityCount">{{ recent_activities|length or 0 }}</span>
+            </div>
+            <div class="card-body p-0" style="max-height: 350px; overflow-y: auto;">
+                <div id="activityFeed">
+                    {% if recent_activities %}
+                    {% for activity in recent_activities %}
+                    <div class="border-bottom p-3 activity-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <span
+                                    class="badge badge-{% if activity.activity_type == 'analysis' %}info{% elif activity.activity_type == 'suggestion' %}warning{% elif activity.activity_type == 'action' %}success{% elif activity.activity_type == 'alert' %}danger{% else %}secondary{% endif %}">
+                                    {{ activity.activity_type|upper }}
+                                </span>
+                                <span class="ml-2">{{ activity.description }}</span>
+                            </div>
+                            <small class="text-muted">{{ activity.timestamp|default('Just now') }}</small>
+                        </div>
+                        {% if activity.result %}
+                        <small class="text-success mt-1 d-block"><i class="fas fa-check-circle"></i> {{
+                            activity.result }}</small>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="text-center text-muted p-4">
+                        <i class="fas fa-inbox fa-2x mb-2"></i>
+                        <p>{{ t('no_recent_activity') or 'No recent AI activity' }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-footer text-center">
+                <button class="btn btn-sm btn-outline-dark" onclick="loadMoreActivity()">
+                    <i class="fas fa-history"></i> {{ t('load_more') or 'Load More' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Goals Progress -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-bullseye"></i> {{ t('goals_progress') or 'Goals Progress' }}</h5>
+                <button class="btn btn-sm btn-outline-light" onclick="showAddGoalModal()">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            <div class="card-body" style="max-height: 350px; overflow-y: auto;">
+                {% if goals %}
+                {% for goal in goals %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="font-weight-bold">{{ goal.name }}</span>
+                        <span
+                            class="badge badge-{% if goal.status == 'completed' %}success{% elif goal.status == 'active' %}primary{% else %}secondary{% endif %}">
+                            {{ goal.status|upper }}
+                        </span>
+                    </div>
+                    <div class="progress" style="height: 20px;">
+                        {% set progress = ((goal.current_value / goal.target_value * 100) if goal.target_value > 0
+                        else 0)|int %}
+                        <div class="progress-bar bg-{% if progress >= 100 %}success{% elif progress >= 50 %}info{% else %}warning{% endif %}"
+                            role="progressbar" style="width: {{ [progress, 100]|min }}%" aria-valuenow="{{ progress }}"
+                            aria-valuemin="0" aria-valuemax="100">
+                            {{ progress }}%
+                        </div>
+                    </div>
+                    <small class="text-muted">
+                        {{ goal.current_value|default(0) }} / {{ goal.target_value|default(0) }} {{
+                        goal.unit|default('') }}
+                        {% if goal.deadline %} • {{ t('deadline') or 'Deadline' }}: {{ goal.deadline }}{% endif %}
+                    </small>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="text-center text-muted p-4">
+                    <i class="fas fa-flag-checkered fa-2x mb-2"></i>
+                    <p>{{ t('no_goals_set') or 'No goals set yet' }}</p>
+                    <button class="btn btn-success btn-sm" onclick="showAddGoalModal()">
+                        <i class="fas fa-plus"></i> {{ t('add_goal') or 'Add Goal' }}
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Active Plans -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-tasks"></i> {{ t('active_plans') or 'Active Plans' }}</h5>
+            </div>
+            <div class="card-body">
+                {% if active_plans %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>{{ t('plan') or 'Plan' }}</th>
+                                <th>{{ t('type') or 'Type' }}</th>
+                                <th>{{ t('progress') or 'Progress' }}</th>
+                                <th>{{ t('created') or 'Created' }}</th>
+                                <th>{{ t('actions') or 'Actions' }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for plan in active_plans %}
+                            <tr>
+                                <td>
+                                    <strong>{{ plan.goal_description|default('Plan #' ~ plan.id) }}</strong>
+                                    <br><small class="text-muted">{{ plan.goal_type }}</small>
+                                </td>
+                                <td><span class="badge badge-info">{{ plan.goal_type|upper }}</span></td>
+                                <td>
+                                    {% set completed = plan.completed_tasks|default(0) %}
+                                    {% set total = plan.total_tasks|default(1) %}
+                                    <div class="progress" style="height: 10px; width: 100px;">
+                                        <div class="progress-bar" style="width: {{ (completed/total*100)|int }}%">
+                                        </div>
+                                    </div>
+                                    <small>{{ completed }}/{{ total }} {{ t('tasks') or 'tasks' }}</small>
+                                </td>
+                                <td><small>{{ plan.created_at|default('N/A') }}</small></td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewPlan({{ plan.id }})">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-warning" onclick="pausePlan({{ plan.id }})">
+                                        <i class="fas fa-pause"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted p-4">
+                    <i class="fas fa-clipboard-list fa-2x mb-2"></i>
+                    <p>{{ t('no_active_plans') or 'No active plans. AI will create plans based on your goals and
+                        brewery needs.' }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Health Overview -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h6 class="card-title">{{ t('optimization_score') or 'Optimization Score' }}</h6>
+                <h2 id="optimizationScore">{{ report.overall_optimization_score or 'N/A' }}</h2>
+                <small>{{ t('based_on_metrics') or 'Based on all metrics' }}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h6 class="card-title">{{ t('improvements_logged') or 'Improvements Logged' }}</h6>
+                <h2 id="improvementCount">{{ improvements|length or 0 }}</h2>
+                <small>{{ t('this_month') or 'This month' }}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <h6 class="card-title">{{ t('active_workflows') or 'Active Workflows' }}</h6>
+                <h2 id="workflowCount">{{ workflows|length or 0 }}</h2>
+                <small>{{ t('automations') or 'Automations running' }}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <h6 class="card-title">{{ t('opportunities') or 'Opportunities' }}</h6>
+                <h2 id="opportunityCount">{{ opportunities|length or 0 }}</h2>
+                <small>{{ t('pending_review') or 'Pending review' }}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Improvement Opportunities -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="fas fa-lightbulb"></i> {{ t('improvement_opportunities') or 'Improvement
+                    Opportunities' }}</h5>
+            </div>
+            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                {% if opportunities %}
+                {% for opp in opportunities %}
+                <div class="border-bottom pb-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1">
+                                <span
+                                    class="badge badge-{% if opp.priority == 'high' %}danger{% elif opp.priority == 'medium' %}warning{% else %}secondary{% endif %}">
+                                    {{ opp.priority|upper }}
+                                </span>
+                                {{ opp.title }}
+                            </h6>
+                            <p class="text-muted mb-2">{{ opp.description }}</p>
+                            <small class="text-info"><strong>{{ t('recommendation') or 'Recommendation' }}:</strong>
+                                {{ opp.recommendation }}</small>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary"
+                            onclick="implementSuggestion('{{ opp.category }}', '{{ opp.title }}')">
+                            <i class="fas fa-check"></i> {{ t('implement') or 'Implement' }}
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="text-muted text-center">{{ t('no_opportunities') or 'No improvement opportunities found.
+                    Run analysis to find optimizations.' }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Optimization Report Sections -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-bar"></i> {{ t('optimization_metrics') or 'Optimization
+                    Metrics' }}</h5>
+            </div>
+            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                {% if report and report.sections %}
+                {% for section in report.sections %}
+                <div class="border-bottom pb-3 mb-3">
+                    <h6 class="text-primary">{{ section.title }}</h6>
+                    <div class="row">
+                        {% for key, value in section.metrics.items() %}
+                        <div class="col-6 mb-2">
+                            <small class="text-muted">{{ key|replace('_', ' ')|title }}</small>
+                            <div class="font-weight-bold">{{ value }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if section.recommendations %}
+                    <div class="mt-2">
+                        <small class="text-success"><i class="fas fa-check-circle"></i> {{
+                            section.recommendations[0] }}</small>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="text-muted text-center">{{ t('no_report') or 'No report generated. Click "Generate Report"
+                    to create one.' }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Feature Enhancement Proposals -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-rocket"></i> {{ t('feature_proposals') or 'Feature Enhancement
+                    Proposals' }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row" id="featureProposals">
+                    {% if proposals %}
+                    {% for proposal in proposals %}
+                    <div class="col-md-4 mb-3">
+                        <div
+                            class="card h-100 border-{% if proposal.estimated_impact.startswith('High') %}success{% elif proposal.estimated_impact.startswith('Medium') %}warning{% else %}secondary{% endif %}">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ proposal.feature }}</h6>
+                                <p class="card-text text-muted small">{{ proposal.reasoning }}</p>
+                                <ul class="list-unstyled small">
+                                    {% for benefit in proposal.benefits[:3] %}
+                                    <li><i class="fas fa-check text-success"></i> {{ benefit }}</li>
+                                    {% endfor %}
+                                </ul>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge badge-info">{{ proposal.complexity }}</span>
+                                    <small class="text-muted">{{ proposal.estimated_impact }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="col-12">
+                        <p class="text-muted text-center">{{ t('no_proposals') or 'No feature proposals available.
+                            System will analyze usage patterns to suggest enhancements.' }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Automation Workflows -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-cogs"></i> {{ t('automation_workflows') or 'Automation Workflows'
+                    }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ t('low_stock_alert') or 'Low Stock Alert' }}</h6>
+                            <small class="text-muted">{{ t('auto_reorder_tasks') or 'Auto-create reorder tasks when
+                                stock is low' }}</small>
+                        </div>
+                        <button class="btn btn-sm btn-outline-success" onclick="createWorkflow('low_stock_alert')">
+                            <i class="fas fa-plus"></i> {{ t('activate') or 'Activate' }}
+                        </button>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ t('quality_check_reminder') or 'Quality Check Reminder' }}</h6>
+                            <small class="text-muted">{{ t('remind_qc_batches') or 'Remind QC for active
+                                fermentation batches' }}</small>
+                        </div>
+                        <button class="btn btn-sm btn-outline-success"
+                            onclick="createWorkflow('quality_check_reminder')">
+                            <i class="fas fa-plus"></i> {{ t('activate') or 'Activate' }}
+                        </button>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ t('customer_reorder') or 'Customer Reorder Reminder' }}</h6>
+                            <small class="text-muted">{{ t('follow_up_inactive') or 'Follow up with inactive
+                                customers' }}</small>
+                        </div>
+                        <button class="btn btn-sm btn-outline-success"
+                            onclick="createWorkflow('customer_reorder_reminder')">
+                            <i class="fas fa-plus"></i> {{ t('activate') or 'Activate' }}
+                        </button>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ t('daily_briefing_auto') or 'Automated Daily Briefing' }}</h6>
+                            <small class="text-muted">{{ t('auto_morning_briefing') or 'Auto-generate morning
+                                briefing at 7am' }}</small>
+                        </div>
+                        <button class="btn btn-sm btn-outline-success" onclick="createWorkflow('daily_briefing')">
+                            <i class="fas fa-plus"></i> {{ t('activate') or 'Activate' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Performance -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="fas fa-tachometer-alt"></i> {{ t('system_performance') or 'System
+                    Performance' }}</h5>
+            </div>
+            <div class="card-body">
+                {% if metrics %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>{{ t('metric') or 'Metric' }}</th>
+                                <th>{{ t('value') or 'Value' }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if metrics.recent_activity %}
+                            <tr>
+                                <td>{{ t('new_batches_24h') or 'New Batches (24h)' }}</td>
+                                <td><span class="badge badge-primary">{{ metrics.recent_activity.new_batches_24h
+                                        }}</span></td>
+                            </tr>
+                            <tr>
+                                <td>{{ t('new_orders_24h') or 'New Orders (24h)' }}</td>
+                                <td><span class="badge badge-success">{{ metrics.recent_activity.new_orders_24h
+                                        }}</span></td>
+                            </tr>
+                            <tr>
+                                <td>{{ t('new_tasks_24h') or 'New Tasks (24h)' }}</td>
+                                <td><span class="badge badge-info">{{ metrics.recent_activity.new_tasks_24h
+                                        }}</span></td>
+                            </tr>
+                            {% endif %}
+                            {% if metrics.data_quality %}
+                            <tr>
+                                <td>{{ t('negative_inventory') or 'Negative Inventory Items' }}</td>
+                                <td><span
+                                        class="badge badge-{{ 'danger' if metrics.data_quality.negative_inventory_items > 0 else 'success' }}">{{
+                                        metrics.data_quality.negative_inventory_items }}</span></td>
+                            </tr>
+                            <tr>
+                                <td>{{ t('overdue_batches') or 'Overdue Planned Batches' }}</td>
+                                <td><span
+                                        class="badge badge-{{ 'warning' if metrics.data_quality.overdue_planned_batches > 0 else 'success' }}">{{
+                                        metrics.data_quality.overdue_planned_batches }}</span></td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">{{ t('no_metrics') or 'Click "Run Analysis" to view system
+                    metrics.' }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Improvement Log -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-history"></i> {{ t('improvement_log') or 'Improvement Log' }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>{{ t('date') or 'Date' }}</th>
+                                <th>{{ t('type') or 'Type' }}</th>
+                                <th>{{ t('description') or 'Description' }}</th>
+                                <th>{{ t('impact') or 'Impact' }}</th>
+                                <th>{{ t('status') or 'Status' }}</th>
+                            </tr>
+                        </thead>
+                        <tbody id="improvementLog">
+                            {% if improvements %}
+                            {% for imp in improvements %}
+                            <tr>
+                                <td>{{ imp.created_at }}</td>
+                                <td><span class="badge badge-secondary">{{ imp.type }}</span></td>
+                                <td>{{ imp.description }}</td>
+                                <td>{{ imp.impact or '-' }}</td>
+                                <td><span class="badge badge-success">{{ imp.status }}</span></td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">{{ t('no_improvements_logged') or 'No
+                                    improvements logged yet. The AI will log improvements as they are made.' }}</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+    async function runSystemAnalysis() {
+        try {
+            showLoading();
+            const response = await fetch('/api/ai/analyze-performance', { method: 'POST' });
+            const data = await response.json();
+
+            if (data.success) {
+                // Also get improvement opportunities
+                const oppResponse = await fetch('/api/ai/identify-opportunities', { method: 'POST' });
+                const oppData = await oppResponse.json();
+
+                alert('{{ t("analysis_complete") or "Analysis complete!" }}\\n\\n{{ t("found_opportunities") or "Found" }}: ' + (oppData.count || 0) + ' {{ t("opportunities") or "opportunities" }}');
+                location.reload();
+            } else {
+                alert('{{ t("analysis_failed") or "Analysis failed" }}: ' + data.error);
+            }
+        } catch (error) {
+            alert('{{ t("error") or "Error" }}: ' + error.message);
+        } finally {
+            hideLoading();
+        }
+    }
+
+    async function generateReport() {
+        try {
+            showLoading();
+            const response = await fetch('/api/ai/generate-report', { method: 'POST' });
+            const data = await response.json();
+
+            if (data.success) {
+                alert('{{ t("report_generated") or "Optimization report generated!" }}\\n\\n{{ t("overall_score") or "Overall Score" }}: ' + data.report.overall_optimization_score);
+                location.reload();
+            } else {
+                alert('{{ t("report_failed") or "Report generation failed" }}: ' + data.error);
+            }
+        } catch (error) {
+            alert('{{ t("error") or "Error" }}: ' + error.message);
+        } finally {
+            hideLoading();
+        }
+    }
+
+    async function createWorkflow(type) {
+        try {
+            const response = await fetch('/api/ai/create-workflow', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ workflow_type: type })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                alert('{{ t("workflow_created") or "Workflow created" }}: ' + data.workflow.name);
+                location.reload();
+            } else {
+                alert('{{ t("workflow_failed") or "Workflow creation failed" }}: ' + data.error);
+            }
+        } catch (error) {
+            alert('{{ t("error") or "Error" }}: ' + error.message);
+        }
+    }
+
+    async function implementSuggestion(category, title) {
+        if (confirm('{{ t("confirm_implement") or "Implement this improvement?" }}\\n\\n' + title)) {
+            // Log the improvement
+            const response = await fetch('/api/ai/log-improvement', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    improvement_type: category,
+                    description: title,
+                    impact: 'Implemented from AI suggestion'
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                alert('{{ t("improvement_logged") or "Improvement logged successfully!" }}');
+                location.reload();
+            }
+        }
+    }
+
+    // AI Autonomy Control Functions
+    async function toggleAIStatus() {
+        try {
+            const currentStatus = document.getElementById('aiStatusBadge').textContent.trim().toLowerCase();
+            const newStatus = currentStatus === 'active' ? 'paused' : 'active';
+
+            const response = await fetch('/ai/planning/' + (newStatus === 'active' ? 'resume-all' : 'pause-all'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('{{ t("status_change_failed") or "Status change failed" }}: ' + data.error);
+            }
+        } catch (error) {
+            alert('{{ t("error") or "Error" }}: ' + error.message);
+        }
+    }
+
+    // Autonomy Level Change
+    document.querySelectorAll('input[name="autonomy"]').forEach(radio => {
+        radio.addEventListener('change', async function () {
+            try {
+                const response = await fetch('/ai/autonomy/set', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ level: this.value })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    console.log('Autonomy level set to:', this.value);
+                }
+            } catch (error) {
+                console.error('Failed to set autonomy level:', error);
+            }
+        });
+    });
+
+    // Planning Mode Change
+    document.querySelectorAll('input[name="planning"]').forEach(radio => {
+        radio.addEventListener('change', async function () {
+            try {
+                const response = await fetch('/ai/planning/configure', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode: this.value })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    console.log('Planning mode set to:', this.value);
+                }
+            } catch (error) {
+                console.error('Failed to set planning mode:', error);
+            }
+        });
+    });
+
+    // Goal Management
+    function showAddGoalModal() {
+        const name = prompt('{{ t("goal_name_prompt") or "Enter goal name:" }}');
+        if (!name) return;
+
+        const targetValue = prompt('{{ t("target_value_prompt") or "Enter target value:" }}');
+        if (!targetValue) return;
+
+        const unit = prompt('{{ t("unit_prompt") or "Enter unit (e.g., batches, liters, %):" }}') || '';
+
+        addGoal(name, parseFloat(targetValue), unit);
+    }
+
+    async function addGoal(name, targetValue, unit) {
+        try {
+            const response = await fetch('/ai/goals/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: name,
+                    target_value: targetValue,
+                    unit: unit,
+                    category: 'general',
+                    priority: 'normal'
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                alert('{{ t("goal_added") or "Goal added successfully!" }}');
+                location.reload();
+            } else {
+                alert('{{ t("goal_add_failed") or "Failed to add goal" }}: ' + data.error);
+            }
+        } catch (error) {
+            alert('{{ t("error") or "Error" }}: ' + error.message);
+        }
+    }
+
+    // Plan Management
+    function viewPlan(planId) {
+        window.location.href = '/ai/planning/active?plan_id=' + planId;
+    }
+
+    async function pausePlan(planId) {
+        if (!confirm('{{ t("confirm_pause_plan") or "Pause this plan?" }}')) return;
+
+        try {
+            const response = await fetch('/ai/planning/stop', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ plan_id: planId })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                alert('{{ t("plan_paused") or "Plan paused" }}');
+                location.reload();
+            }
+        } catch (error) {
+            alert('{{ t("error") or "Error" }}: ' + error.message);
+        }
+    }
+
+    // Activity Feed
+    async function loadMoreActivity() {
+        try {
+            const response = await fetch('/ai/activity/feed?limit=20');
+            const data = await response.json();
+
+            if (data.success && data.activities) {
+                const feed = document.getElementById('activityFeed');
+                data.activities.forEach(activity => {
+                    const item = document.createElement('div');
+                    item.className = 'border-bottom p-3 activity-item';
+                    item.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <span class="badge badge-${getActivityBadgeClass(activity.activity_type)}">
+                                    ${activity.activity_type.toUpperCase()}
+                                </span>
+                                <span class="ml-2">${activity.description}</span>
+                            </div>
+                            <small class="text-muted">${activity.timestamp || 'Just now'}</small>
+                        </div>
+                        ${activity.result ? `<small class="text-success mt-1 d-block"><i class="fas fa-check-circle"></i> ${activity.result}</small>` : ''}
+                    `;
+                    feed.appendChild(item);
+                });
+
+                document.getElementById('activityCount').textContent = feed.children.length;
+            }
+        } catch (error) {
+            console.error('Failed to load more activity:', error);
+        }
+    }
+
+    function getActivityBadgeClass(type) {
+        const classes = {
+            'analysis': 'info',
+            'suggestion': 'warning',
+            'action': 'success',
+            'alert': 'danger',
+            'plan': 'primary',
+            'goal': 'success'
+        };
+        return classes[type] || 'secondary';
+    }
+
+    // Auto-refresh activity feed every 30 seconds
+    setInterval(async () => {
+        try {
+            const response = await fetch('/ai/activity/feed?limit=5');
+            const data = await response.json();
+
+            if (data.success && data.activities && data.activities.length > 0) {
+                const countBadge = document.getElementById('activityCount');
+                const currentCount = parseInt(countBadge.textContent) || 0;
+                if (data.activities.length > currentCount) {
+                    // New activity detected, show notification
+                    countBadge.classList.add('badge-warning');
+                    setTimeout(() => countBadge.classList.remove('badge-warning'), 2000);
+                }
+            }
+        } catch (error) {
+            // Silent fail for auto-refresh
+        }
+    }, 30000);
+
+    function showLoading() {
+        // Add loading indicator
+        const btn = event.target;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+    }
+
+    function hideLoading() {
+        // Remove loading indicator
+        location.reload();
+    }
+</script>
+{% endblock %}

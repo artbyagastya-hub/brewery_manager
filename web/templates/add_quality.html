@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Add Quality Record - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-plus me-2"></i>Add Quality Record</h2>
+    <a href="/quality" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i>Back</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Batch *</label>
+                    <select name="batch_id" class="form-select" required>
+                        <option value="">Select Batch</option>
+                        {% for b in batches %}
+                        <option value="{{ b.id }}">{{ b.batch_number }} - {{ b.product_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Test Type *</label>
+                    <select name="test_type" class="form-select" required>
+                        <option value="">Select Test Type</option>
+                        <option value="ph">pH Test</option>
+                        <option value="gravity">Gravity Test</option>
+                        <option value="taste">Taste Test</option>
+                        <option value="appearance">Appearance Test</option>
+                        <option value="alcohol">Alcohol Content</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Test Date *</label>
+                    <input type="date" name="test_date" class="form-control" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Result *</label>
+                    <select name="result" class="form-select" required>
+                        <option value="pass">Pass</option>
+                        <option value="fail">Fail</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Tested By</label>
+                    <input type="text" name="tested_by" class="form-control">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Measured Value</label>
+                    <input type="text" name="measured_value" class="form-control">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Expected Value</label>
+                    <input type="text" name="expected_value" class="form-control">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Notes</label>
+                <textarea name="notes" class="form-control" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Save Record</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

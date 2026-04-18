@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Inventory - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-boxes me-2"></i>Inventory Management</h2>
+    <a href="/inventory/add" class="btn btn-primary"><i class="fas fa-plus me-1"></i>Add Material</a>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <select name="category" class="form-select">
+                    <option value="">All Categories</option>
+                    <option value="hops" {% if category=='hops' %}selected{% endif %}>Hops</option>
+                    <option value="malt" {% if category=='malt' %}selected{% endif %}>Malt</option>
+                    <option value="yeast" {% if category=='yeast' %}selected{% endif %}>Yeast</option>
+                    <option value="adjuncts" {% if category=='adjuncts' %}selected{% endif %}>Adjuncts</option>
+                    <option value="packaging" {% if category=='packaging' %}selected{% endif %}>Packaging</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="low_stock" value="true" {% if low_stock
+                        %}checked{% endif %}>
+                    <label class="form-check-label">Show Low Stock Only</label>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-outline-primary">Filter</button>
+                <a href="/inventory" class="btn btn-outline-secondary">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search materials...">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <a href="/inventory/export" class="btn btn-success"><i class="fas fa-file-excel me-1"></i>Export
+                    Excel</a>
+            </div>
+        </div>
+        <table class="table table-hover" id="inventoryTable">
+            <thead>
+                <tr>
+                    <th class="sortable" data-col="0">ID</th>
+                    <th class="sortable" data-col="1">Name</th>
+                    <th class="sortable" data-col="2">Category</th>
+                    <th class="sortable" data-col="3">Quantity</th>
+                    <th>Unit</th>
+                    <th class="sortable" data-col="5">Cost/Unit</th>
+                    <th class="sortable" data-col="6">Supplier</th>
+                    <th class="sortable" data-col="7">Expiry</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in materials %}
+                <tr {% if m.quantity <=m.min_quantity %}class="table-danger" {% endif %}>
+                    <td>{{ m.id }}</td>
+                    <td>{{ m.name }}</td>
+                    <td><span class="badge bg-secondary">{{ m.category }}</span></td>
+                    <td>{{ m.quantity }}</td>
+                    <td>{{ m.unit }}</td>
+                    <td>{{ m.cost_per_unit | currency }} VND</td>
+                    <td>{{ m.supplier or 'N/A' }}</td>
+                    <td>{{ m.expiry_date or 'N/A' }}</td>
+                    <td>
+                        <a href="/inventory/{{ m.id }}/edit" class="btn btn-sm btn-outline-primary"><i
+                                class="fas fa-edit"></i></a>
+                        <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal"
+                            data-bs-target="#adjustModal{{ m.id }}"><i class="fas fa-balance-scale"></i></button>
+                    </td>
+                </tr>
+                <div class="modal fade" id="adjustModal{{ m.id }}" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form method="POST" action="/inventory/{{ m.id }}/adjust">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Adjust Stock: {{ m.name }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>Current: {{ m.quantity }} {{ m.unit }}</p>
+                                    <div class="mb-3">
+                                        <label class="form-label">Quantity Change (+/-)</label>
+                                        <input type="number" step="0.01" name="quantity_change" class="form-control"
+                                            required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Reason</label>
+                                        <input type="text" name="reason" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary"
+                                        data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">Adjust</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="text-center">No materials found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    initSearch('searchInput', 'inventoryTable');
+    initSortable('inventoryTable');
+    initPagination('inventoryTable', 10);
+</script>
+{% endblock %}

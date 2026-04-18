@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('lot_tracking', default='Lot Tracking') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>{{ t('lot_tracking', default='Lot Tracking') }}</h2>
+        <a href="{{ url_for('receive_lot') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> {{ t('receive_lot', default='Receive Lot') }}
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">{{ t('type', default='Type') }}</label>
+                    <select name="type" class="form-select">
+                        <option value="">{{ t('all', default='All') }}</option>
+                        <option value="raw_material" {% if type=='raw_material' %}selected{% endif %}>{{
+                            t('raw_material', default='Raw Material') }}</option>
+                        <option value="finished_good" {% if type=='finished_good' %}selected{% endif %}>{{
+                            t('finished_good', default='Finished Good') }}</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">{{ t('status', default='Status') }}</label>
+                    <select name="status" class="form-select">
+                        <option value="">{{ t('all', default='All') }}</option>
+                        <option value="active" {% if status=='active' %}selected{% endif %}>{{ t('active',
+                            default='Active') }}</option>
+                        <option value="depleted" {% if status=='depleted' %}selected{% endif %}>{{ t('depleted',
+                            default='Depleted') }}</option>
+                        <option value="expired" {% if status=='expired' %}selected{% endif %}>{{ t('expired',
+                            default='Expired') }}</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-outline-primary">{{ t('filter', default='Filter') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lots Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>{{ t('lot_number', default='Lot Number') }}</th>
+                            <th>{{ t('item', default='Item') }}</th>
+                            <th>{{ t('type', default='Type') }}</th>
+                            <th>{{ t('quantity', default='Quantity') }}</th>
+                            <th>{{ t('received_date', default='Received Date') }}</th>
+                            <th>{{ t('expiry_date', default='Expiry Date') }}</th>
+                            <th>{{ t('supplier', default='Supplier') }}</th>
+                            <th>{{ t('status', default='Status') }}</th>
+                            <th>{{ t('actions', default='Actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lot in lots %}
+                        <tr>
+                            <td><a href="{{ url_for('lot_details', lot_id=lot.id) }}">{{ lot.lot_number }}</a></td>
+                            <td>{{ lot.material_name or lot.product_name or '-' }}</td>
+                            <td>
+                                <span
+                                    class="badge bg-{{ 'primary' if lot.item_type == 'raw_material' else 'success' }}">
+                                    {{ t(lot.item_type, default=lot.item_type) }}
+                                </span>
+                            </td>
+                            <td>{{ lot.quantity }} {{ lot.unit }}</td>
+                            <td>{{ lot.received_date or '-' }}</td>
+                            <td>{{ lot.expiry_date or '-' }}</td>
+                            <td>{{ lot.supplier or '-' }}</td>
+                            <td>
+                                <span
+                                    class="badge bg-{{ 'success' if lot.status == 'active' else 'secondary' if lot.status == 'depleted' else 'danger' }}">
+                                    {{ t(lot.status, default=lot.status) }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('lot_details', lot_id=lot.id) }}"
+                                    class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not lots %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted">{{ t('no_lots_found', default='No lots
+                                found') }}</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

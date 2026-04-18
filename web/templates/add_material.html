@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Add Material - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-plus me-2"></i>Add Raw Material</h2>
+    <a href="/inventory" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i>Back</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Material Name *</label>
+                    <input type="text" name="name" class="form-control" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Category *</label>
+                    <select name="category" class="form-select" required>
+                        <option value="">Select Category</option>
+                        <option value="hops">Hops</option>
+                        <option value="malt">Malt</option>
+                        <option value="yeast">Yeast</option>
+                        <option value="adjuncts">Adjuncts</option>
+                        <option value="packaging">Packaging</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Unit *</label>
+                    <select name="unit" class="form-select" required>
+                        <option value="kg">kg</option>
+                        <option value="liters">liters</option>
+                        <option value="pieces">pieces</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Initial Quantity</label>
+                    <input type="number" step="0.01" name="quantity" class="form-control" value="0">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Minimum Stock Level</label>
+                    <input type="number" step="0.01" name="min_quantity" class="form-control" value="0">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Cost per Unit (VND)</label>
+                    <input type="number" step="0.01" name="cost_per_unit" class="form-control" value="0">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Supplier</label>
+                    <input type="text" name="supplier" class="form-control">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Origin</label>
+                    <input type="text" name="origin" class="form-control">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Expiry Date</label>
+                    <input type="date" name="expiry_date" class="form-control">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Storage Location</label>
+                    <input type="text" name="storage_location" class="form-control">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Notes</label>
+                    <input type="text" name="notes" class="form-control">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Save Material</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+services:
+  brewery-manager:
+    build: .
+    container_name: brewery-manager
+    restart: unless-stopped
+    ports:
+      - "80:5001"
+    volumes:
+      - brewery-data:/app/data
+      - brewery-backups:/app/backups
+    environment:
+      - FLASK_ENV=production
+      - SECRET_KEY=${SECRET_KEY:-change-this-to-a-random-secret-key}
+
+volumes:
+  brewery-data:
+    driver: local
+  brewery-backups:
+    driver: local

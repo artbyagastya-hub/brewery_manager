@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('receive_lot', default='Receive Lot') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>{{ t('receive_lot', default='Receive Lot') }}</h2>
+        <a href="{{ url_for('lots') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> {{ t('back', default='Back') }}
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ t('material', default='Material') }} *</label>
+                        <select name="material_id" class="form-select" required>
+                            <option value="">{{ t('select_material', default='Select Material') }}</option>
+                            {% for material in materials %}
+                            <option value="{{ material.id }}">{{ material.name }} ({{ material.unit }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">{{ t('quantity', default='Quantity') }} *</label>
+                        <input type="number" step="0.01" name="quantity" class="form-control" required>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">{{ t('unit', default='Unit') }} *</label>
+                        <input type="text" name="unit" class="form-control" required placeholder="kg, L, etc.">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">{{ t('received_date', default='Received Date') }} *</label>
+                        <input type="date" name="received_date" class="form-control" required value="{{ today }}">
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">{{ t('expiry_date', default='Expiry Date') }}</label>
+                        <input type="date" name="expiry_date" class="form-control">
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">{{ t('supplier', default='Supplier') }}</label>
+                        <input type="text" name="supplier" class="form-control">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ t('supplier_lot', default='Supplier Lot Number') }}</label>
+                        <input type="text" name="supplier_lot" class="form-control">
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ t('storage_location', default='Storage Location') }}</label>
+                        <input type="text" name="storage_location" class="form-control"
+                            placeholder="e.g., Warehouse A, Shelf 3">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">{{ t('notes', default='Notes') }}</label>
+                    <textarea name="notes" class="form-control" rows="3"></textarea>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-check"></i> {{ t('receive', default='Receive') }}
+                    </button>
+                    <a href="{{ url_for('lots') }}" class="btn btn-outline-secondary">{{ t('cancel', default='Cancel')
+                        }}</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

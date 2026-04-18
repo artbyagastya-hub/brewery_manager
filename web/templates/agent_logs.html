@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('agent_logs', 'Agent Logs') }} - {{ t('brewery_manager', 'Brewery Manager') }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>🤖 {{ t('agent_logs', 'Agent Activity Logs') }}</h2>
+    <div>
+        <a href="/analytics" class="btn btn-outline-primary">
+            📊 {{ t('analytics', 'Analytics') }}
+        </a>
+        <a href="/agent/rules" class="btn btn-outline-secondary ms-2">
+            ⚙️ {{ t('agent_rules', 'Agent Rules') }}
+        </a>
+    </div>
+</div>
+
+<!-- Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">{{ t('category', 'Category') }}</label>
+                <select name="category" class="form-select">
+                    <option value="">{{ t('all_categories', 'All Categories') }}</option>
+                    <option value="inventory" {% if category_filter=='inventory' %}selected{% endif %}>📦 {{
+                        t('inventory', 'Inventory') }}</option>
+                    <option value="maintenance" {% if category_filter=='maintenance' %}selected{% endif %}>🔧 {{
+                        t('maintenance', 'Maintenance') }}</option>
+                    <option value="production" {% if category_filter=='production' %}selected{% endif %}>🍺 {{
+                        t('production', 'Production') }}</option>
+                    <option value="quality" {% if category_filter=='quality' %}selected{% endif %}>🧪 {{ t('quality',
+                        'Quality') }}</option>
+                    <option value="finance" {% if category_filter=='finance' %}selected{% endif %}>💰 {{ t('finance',
+                        'Finance') }}</option>
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">{{ t('filter', 'Filter') }}</button>
+                <a href="/agent/logs" class="btn btn-outline-secondary ms-2">{{ t('clear', 'Clear') }}</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Logs Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">{{ t('activity_logs', 'Activity Logs') }}</h5>
+        <span class="badge bg-primary">{{ logs|length }} {{ t('entries', 'entries') }}</span>
+    </div>
+    <div class="card-body p-0">
+        {% if logs %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>{{ t('time', 'Time') }}</th>
+                        <th>{{ t('rule', 'Rule') }}</th>
+                        <th>{{ t('category', 'Category') }}</th>
+                        <th>{{ t('status', 'Status') }}</th>
+                        <th>{{ t('details', 'Details') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td>
+                            <small>{{ log.created_at }}</small>
+                        </td>
+                        <td>
+                            <strong>{{ log.rule_name }}</strong>
+                        </td>
+                        <td>
+                            {% if log.category == 'inventory' %}
+                            <span class="badge bg-info">📦 {{ log.category }}</span>
+                            {% elif log.category == 'maintenance' %}
+                            <span class="badge bg-warning">🔧 {{ log.category }}</span>
+                            {% elif log.category == 'production' %}
+                            <span class="badge bg-primary">🍺 {{ log.category }}</span>
+                            {% elif log.category == 'quality' %}
+                            <span class="badge bg-danger">🧪 {{ log.category }}</span>
+                            {% elif log.category == 'finance' %}
+                            <span class="badge bg-success">💰 {{ log.category }}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ log.category }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if log.status == 'completed' %}
+                            <span class="badge bg-success">✅ {{ log.status }}</span>
+                            {% elif log.status == 'error' %}
+                            <span class="badge bg-danger">❌ {{ log.status }}</span>
+                            {% elif log.status == 'pending' %}
+                            <span class="badge bg-warning">⏳ {{ log.status }}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ log.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
+                                data-bs-target="#logModal{{ log.id }}">
+                                {{ t('view', 'View') }}
+                            </button>
+                        </td>
+                    </tr>
+
+                    <!-- Modal for log details -->
+                    <div class="modal fade" id="logModal{{ log.id }}" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">{{ t('log_details', 'Log Details') }} - {{ log.rule_name }}
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6>{{ t('trigger_data', 'Trigger Data') }}</h6>
+                                            <pre class="bg-light p-2 rounded"><code>{{ log.trigger_data }}</code></pre>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6>{{ t('action_taken', 'Action Taken') }}</h6>
+                                            <pre class="bg-light p-2 rounded"><code>{{ log.action_taken }}</code></pre>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-12">
+                                            <h6>{{ t('result', 'Result') }}</h6>
+                                            <pre class="bg-light p-2 rounded"><code>{{ log.result }}</code></pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <h4 class="text-muted">🤖</h4>
+            <p class="text-muted">{{ t('no_logs', 'No agent activity logs') }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

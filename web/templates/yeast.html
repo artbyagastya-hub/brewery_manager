@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('yeast_strains', default='Yeast Strains') }} - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">🧫 {{ t('yeast_strains', default='Yeast Strains') }}</h1>
+        <div>
+            <a href="{{ url_for('yeast_inventory') }}" class="btn btn-info">
+                <i class="fas fa-boxes"></i> {{ t('inventory', default='Inventory') }}
+            </a>
+            <a href="{{ url_for('yeast_usage') }}" class="btn btn-secondary">
+                <i class="fas fa-history"></i> {{ t('usage_log', default='Usage Log') }}
+            </a>
+            <a href="{{ url_for('add_yeast_strain') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> {{ t('add_yeast', default='Add Yeast') }}
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>{{ t('name', default='Name') }}</th>
+                            <th>{{ t('lab', default='Lab') }}</th>
+                            <th>{{ t('type', default='Type') }}</th>
+                            <th>{{ t('form', default='Form') }}</th>
+                            <th>{{ t('attenuation', default='Attenuation') }}</th>
+                            <th>{{ t('temp_range', default='Temp Range') }}</th>
+                            <th>{{ t('flocculation', default='Flocculation') }}</th>
+                            <th>{{ t('status', default='Status') }}</th>
+                            <th>{{ t('actions', default='Actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for strain in strains %}
+                        <tr>
+                            <td><strong>{{ strain.name }}</strong></td>
+                            <td>{{ strain.lab or '-' }}</td>
+                            <td>{{ strain.yeast_type }}</td>
+                            <td>{{ strain.form }}</td>
+                            <td>{{ strain.attenuation_min }}-{{ strain.attenuation_max }}%</td>
+                            <td>{{ strain.min_temp }}-{{ strain.max_temp }}°C</td>
+                            <td>{{ strain.flocculation }}</td>
+                            <td>
+                                {% if strain.is_active %}
+                                <span class="badge bg-success">{{ t('active', default='Active') }}</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ t('inactive', default='Inactive') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-info" data-bs-toggle="modal"
+                                    data-bs-target="#yeastModal{{ strain.id }}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% for strain in strains %}
+<div class="modal fade" id="yeastModal{{ strain.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ strain.name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>{{ t('lab', default='Lab') }}:</strong> {{ strain.lab or '-' }}</p>
+                <p><strong>{{ t('product_id', default='Product ID') }}:</strong> {{ strain.product_id or '-' }}</p>
+                <p><strong>{{ t('type', default='Type') }}:</strong> {{ strain.yeast_type }}</p>
+                <p><strong>{{ t('form', default='Form') }}:</strong> {{ strain.form }}</p>
+                <p><strong>{{ t('attenuation', default='Attenuation') }}:</strong> {{ strain.attenuation_min }}-{{
+                    strain.attenuation_max }}%</p>
+                <p><strong>{{ t('flocculation', default='Flocculation') }}:</strong> {{ strain.flocculation }}</p>
+                <p><strong>{{ t('temp_range', default='Temp Range') }}:</strong> {{ strain.min_temp }}-{{
+                    strain.max_temp }}°C</p>
+                <p><strong>{{ t('alcohol_tolerance', default='Alcohol Tolerance') }}:</strong> {{
+                    strain.alcohol_tolerance }}%</p>
+                {% if strain.description %}
+                <p><strong>{{ t('description', default='Description') }}:</strong> {{ strain.description }}</p>
+                {% endif %}
+                {% if strain.notes %}
+                <p><strong>{{ t('notes', default='Notes') }}:</strong> {{ strain.notes }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

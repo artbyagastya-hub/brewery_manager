@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('accounting.create_invoice') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-file-invoice-dollar"></i> {{ t('accounting.create_invoice') }}</h2>
+        <a href="/accounting" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> {{ t('common.back') }}
+        </a>
+    </div>
+
+    <form method="POST" action="/accounting/invoice/create">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <!-- Seller Information (Auto-filled) -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-building"></i> {{ t('accounting.seller_info') }}
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('accounting.company_name') }}</label>
+                            <input type="text" class="form-control" value="CÔNG TY TNHH BIA VIỆT NAM" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('accounting.tax_code') }}</label>
+                            <input type="text" class="form-control" value="0123456789" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('accounting.address') }}</label>
+                            <input type="text" class="form-control"
+                                value="123 Đường Nguyễn Văn Linh, Quận 7, TP. Hồ Chí Minh" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Buyer Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-user"></i> {{ t('accounting.buyer_info') }}
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('accounting.buyer_name') }} *</label>
+                            <select class="form-select" name="customer_id" id="customerSelect" required>
+                                <option value="">{{ t('common.select') }}</option>
+                                {% for customer in customers %}
+                                <option value="{{ customer.id }}" data-name="{{ customer.name }}"
+                                    data-address="{{ customer.address }}" data-tax="{{ customer.tax_id }}">
+                                    {{ customer.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('accounting.buyer_tax_code') }}</label>
+                            <input type="text" class="form-control" name="buyer_tax_code" id="buyerTaxCode">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('accounting.buyer_address') }}</label>
+                            <input type="text" class="form-control" name="buyer_address" id="buyerAddress">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Invoice Details -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-info-circle"></i> {{ t('accounting.invoice_details') }}
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('accounting.invoice_number') }} *</label>
+                            <input type="text" class="form-control" name="invoice_number"
+                                value="{{ next_invoice_number }}" required readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('accounting.invoice_date') }} *</label>
+                            <input type="date" class="form-control" name="invoice_date" value="{{ today }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('accounting.payment_method') }}</label>
+                            <select class="form-select" name="payment_method">
+                                <option value="cash">{{ t('accounting.cash') }}</option>
+                                <option value="bank_transfer">{{ t('accounting.bank_transfer') }}</option>
+                                <option value="credit">{{ t('accounting.credit') }}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Invoice Items -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-list"></i> {{ t('accounting.invoice_items') }}
+            </div>
+            <div class="card-body">
+                <table class="table table-bordered" id="itemsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>{{ t('accounting.item_no') }}</th>
+                            <th>{{ t('accounting.product_name') }}</th>
+                            <th>{{ t('accounting.unit') }}</th>
+                            <th>{{ t('accounting.quantity') }}</th>
+                            <th>{{ t('accounting.unit_price') }}</th>
+                            <th>{{ t('accounting.line_total') }}</th>
+                            <th><button type="button" class="btn btn-sm btn-success" onclick="addItem()"><i
+                                        class="fas fa-plus"></i></button></th>
+                        </tr>
+                    </thead>
+                    <tbody id="itemsBody">
+                        <tr id="itemRow0">
+                            <td>1</td>
+                            <td>
+                                <select class="form-select" name="product_id_0" onchange="updatePrice(0)">
+                                    <option value="">{{ t('common.select') }}</option>
+                                    {% for product in products %}
+                                    <option value="{{ product.id }}" data-price="{{ product.price_per_unit }}">
+                                        {{ product.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td><input type="text" class="form-control" name="unit_0" value="chai"></td>
+                            <td><input type="number" class="form-control" name="quantity_0" min="1" value="1"
+                                    onchange="calculateLine(0)"></td>
+                            <td><input type="number" class="form-control" name="unit_price_0" min="0"
+                                    onchange="calculateLine(0)"></td>
+                            <td><input type="text" class="form-control" name="line_total_0" readonly></td>
+                            <td><button type="button" class="btn btn-sm btn-danger" onclick="removeItem(0)"><i
+                                        class="fas fa-trash"></i></button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tax Calculation -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-calculator"></i> {{ t('accounting.tax_calculation') }}
+            </div>
+            <div class="card-body">
+                <div class="row justify-content-end">
+                    <div class="col-md-6">
+                        <table class="table">
+                            <tr>
+                                <td><strong>{{ t('accounting.subtotal') }}:</strong></td>
+                                <td class="text-end" id="subtotal">0 VNĐ</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong>{{ t('accounting.sct') }} (65%):</strong>
+                                    <br><small class="text-muted">{{ t('accounting.sct_note') }}</small>
+                                </td>
+                                <td class="text-end" id="sctAmount">0 VNĐ</td>
+                            </tr>
+                            <tr>
+                                <td><strong>{{ t('accounting.vat') }} (10%):</strong></td>
+                                <td class="text-end" id="vatAmount">0 VNĐ</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong>{{ t('accounting.environmental_tax') }}:</strong>
+                                    <br><small class="text-muted">{{ t('accounting.env_tax_note') }}</small>
+                                </td>
+                                <td class="text-end" id="envTax">0 VNĐ</td>
+                            </tr>
+                            <tr class="table-primary">
+                                <td><strong>{{ t('accounting.total') }}:</strong></td>
+                                <td class="text-end"><strong id="totalAmount">0 VNĐ</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>{{ t('accounting.amount_in_words') }}:</strong></td>
+                                <td class="text-end"><em id="amountInWords"></em></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-sticky-note"></i> {{ t('accounting.notes') }}
+            </div>
+            <div class="card-body">
+                <textarea class="form-control" name="notes" rows="3"></textarea>
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-secondary" onclick="window.print()">
+                <i class="fas fa-print"></i> {{ t('common.print') }}
+            </button>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> {{ t('accounting.create_invoice') }}
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let itemCount = 1;
+
+    function addItem() {
+        const tbody = document.getElementById('itemsBody');
+        const newRow = document.createElement('tr');
+        newRow.id = `itemRow${itemCount}`;
+        newRow.innerHTML = `
+        <td>${itemCount + 1}</td>
+        <td>
+            <select class="form-select" name="product_id_${itemCount}" onchange="updatePrice(${itemCount})">
+                <option value="">{{ t('common.select') }}</option>
+                {% for product in products %}
+                <option value="{{ product.id }}" data-price="{{ product.price_per_unit }}">
+                    {{ product.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </td>
+        <td><input type="text" class="form-control" name="unit_${itemCount}" value="chai"></td>
+        <td><input type="number" class="form-control" name="quantity_${itemCount}" min="1" value="1" onchange="calculateLine(${itemCount})"></td>
+        <td><input type="number" class="form-control" name="unit_price_${itemCount}" min="0" onchange="calculateLine(${itemCount})"></td>
+        <td><input type="text" class="form-control" name="line_total_${itemCount}" readonly></td>
+        <td><button type="button" class="btn btn-sm btn-danger" onclick="removeItem(${itemCount})"><i class="fas fa-trash"></i></button></td>
+    `;
+        tbody.appendChild(newRow);
+        itemCount++;
+    }
+
+    function removeItem(index) {
+        const row = document.getElementById(`itemRow${index}`);
+        if (row) {
+            row.remove();
+            calculateTotals();
+        }
+    }
+
+    function updatePrice(index) {
+        const select = document.querySelector(`select[name="product_id_${index}"]`);
+        const option = select.options[select.selectedIndex];
+        const price = option.getAttribute('data-price');
+        if (price) {
+            document.querySelector(`input[name="unit_price_${index}"]`).value = price;
+            calculateLine(index);
+        }
+    }
+
+    function calculateLine(index) {
+        const quantity = parseFloat(document.querySelector(`input[name="quantity_${index}"]`).value) || 0;
+        const unitPrice = parseFloat(document.querySelector(`input[name="unit_price_${index}"]`).value) || 0;
+        const lineTotal = quantity * unitPrice;
+        document.querySelector(`input[name="line_total_${index}"]`).value = formatNumber(lineTotal);
+        calculateTotals();
+    }
+
+    function calculateTotals() {
+        let subtotal = 0;
+        for (let i = 0; i <= itemCount; i++) {
+            const row = document.getElementById(`itemRow${i}`);
+            if (row) {
+                const lineTotal = parseFloat(row.querySelector(`input[name="line_total_${i}"]`).value.replace(/\./g, '')) || 0;
+                subtotal += lineTotal;
+            }
+        }
+
+        // SCT: 65% of subtotal
+        const sct = Math.round(subtotal * 0.65);
+
+        // VAT: 10% of (subtotal + SCT)
+        const vat = Math.round((subtotal + sct) * 0.10);
+
+        // Environmental Tax: 1,000 VND per liter (assuming 500ml per unit)
+        const envTax = Math.round(subtotal / 10000 * 1000); // Simplified calculation
+
+        const total = subtotal + sct + vat + envTax;
+
+        document.getElementById('subtotal').textContent = formatNumber(subtotal) + ' VNĐ';
+        document.getElementById('sctAmount').textContent = formatNumber(sct) + ' VNĐ';
+        document.getElementById('vatAmount').textContent = formatNumber(vat) + ' VNĐ';
+        document.getElementById('envTax').textContent = formatNumber(envTax) + ' VNĐ';
+        document.getElementById('totalAmount').textContent = formatNumber(total) + ' VNĐ';
+        document.getElementById('amountInWords').textContent = numberToWords(total);
+    }
+
+    function formatNumber(num) {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    function numberToWords(num) {
+        // Simplified version - would need full implementation
+        return num.toLocaleString('vi-VN') + ' đồng';
+    }
+
+    // Customer selection handler
+    document.getElementById('customerSelect').addEventListener('change', function () {
+        const option = this.options[this.selectedIndex];
+        document.getElementById('buyerAddress').value = option.getAttribute('data-address') || '';
+        document.getElementById('buyerTaxCode').value = option.getAttribute('data-tax') || '';
+    });
+
+    // Initialize
+    calculateTotals();
+</script>
+{% endblock %}

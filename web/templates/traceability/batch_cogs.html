@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('traceability.batch_cogs', 'Batch COGS') }} - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-calculator me-2"></i>{{ t('traceability.batch_cogs', 'Batch COGS') }}: {{ cogs.batch_number
+            }}</h2>
+        <a href="{{ url_for('production') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>{{ t('common.back', 'Back to Production') }}
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ t('traceability.batch_info', 'Batch Info') }}</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless table-sm">
+                        <tr>
+                            <th>{{ t('traceability.batch_number', 'Batch Number') }}</th>
+                            <td>{{ cogs.batch_number }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('traceability.product', 'Product') }}</th>
+                            <td>{{ cogs.product_name }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('traceability.planned_qty', 'Planned Qty') }}</th>
+                            <td>{{ cogs.planned_quantity }} L</td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('traceability.actual_qty', 'Actual Qty') }}</th>
+                            <td>{{ cogs.actual_quantity or '-' }} L</td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('traceability.status', 'Status') }}</th>
+                            <td><span class="badge bg-info">{{ cogs.status }}</span></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ t('traceability.cost_breakdown', 'Cost Breakdown') }}</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>{{ t('traceability.category', 'Category') }}</th>
+                                <th>{{ t('traceability.material', 'Material') }}</th>
+                                <th>{{ t('traceability.lot_number', 'Lot') }}</th>
+                                <th class="text-end">{{ t('traceability.quantity', 'Quantity') }}</th>
+                                <th class="text-end">{{ t('traceability.cost', 'Cost') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in cogs.items %}
+                            <tr>
+                                <td><span class="badge bg-secondary">{{ item.category }}</span></td>
+                                <td>{{ item.material_name }}</td>
+                                <td>{{ item.lot_number or '-' }}</td>
+                                <td class="text-end">{{ item.quantity_used|round(2) }} {{ item.unit }}</td>
+                                <td class="text-end">{{ item.total_cost|currency }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-dark">
+                                <th colspan="4">{{ t('traceability.total_cogs', 'Total COGS') }}</th>
+                                <th class="text-end">{{ cogs.total_cogs|currency }}</th>
+                            </tr>
+                            {% if cogs.actual_quantity %}
+                            <tr>
+                                <th colspan="4">{{ t('traceability.cost_per_liter', 'Cost per Liter') }}</th>
+                                <th class="text-end">{{ (cogs.total_cogs / cogs.actual_quantity)|round(2)|currency }}
+                                </th>
+                            </tr>
+                            {% endif %}
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

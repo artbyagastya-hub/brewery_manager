@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('inventory_value_report', default='Inventory Value Report') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>{{ t('inventory_value_report', default='Inventory Value Report') }}</h2>
+        <a href="{{ url_for('inventory') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> {{ t('back_to_inventory', default='Back to Inventory') }}
+        </a>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6>{{ t('raw_materials', default='Raw Materials') }}</h6>
+                    <h3>{{ summary.raw_materials.total_value | currency }}</h3>
+                    <small>{{ summary.raw_materials.item_count }} {{ t('items', default='items') }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6>{{ t('finished_goods', default='Finished Goods') }}</h6>
+                    <h3>{{ summary.finished_goods.total_value | currency }}</h3>
+                    <small>{{ summary.finished_goods.item_count }} {{ t('items', default='items') }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <h6>{{ t('work_in_progress', default='WIP') }}</h6>
+                    <h3>{{ summary.work_in_progress.total_value | currency }}</h3>
+                    <small>{{ summary.work_in_progress.item_count }} {{ t('batches', default='batches') }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6>{{ t('total_inventory', default='Total Inventory') }}</h6>
+                    <h3>{{ summary.total_value | currency }}</h3>
+                    <small>&nbsp;</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Raw Materials -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">{{ t('raw_materials', default='Raw Materials') }}</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                    <thead>
+                        <tr>
+                            <th>{{ t('material', default='Material') }}</th>
+                            <th>{{ t('category', default='Category') }}</th>
+                            <th class="text-end">{{ t('quantity', default='Quantity') }}</th>
+                            <th class="text-end">{{ t('avg_cost', default='Avg Cost') }}</th>
+                            <th class="text-end">{{ t('total_value', default='Total Value') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in raw_materials %}
+                        <tr>
+                            <td>{{ item.name }}</td>
+                            <td>{{ item.category or '-' }}</td>
+                            <td class="text-end">{{ item.quantity | round(2) }} {{ item.unit }}</td>
+                            <td class="text-end">{{ item.avg_cost | currency }}</td>
+                            <td class="text-end">{{ item.total_value | currency }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not raw_materials %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">{{ t('no_raw_materials', default='No raw
+                                materials') }}</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <th colspan="4">{{ t('subtotal', default='Subtotal') }}</th>
+                            <th class="text-end">{{ summary.raw_materials.total_value | currency }}</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Finished Goods -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">{{ t('finished_goods', default='Finished Goods') }}</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                    <thead>
+                        <tr>
+                            <th>{{ t('product', default='Product') }}</th>
+                            <th>{{ t('sku', default='SKU') }}</th>
+                            <th class="text-end">{{ t('quantity', default='Quantity') }}</th>
+                            <th class="text-end">{{ t('avg_cost_per_liter', default='Avg Cost/L') }}</th>
+                            <th class="text-end">{{ t('total_value', default='Total Value') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in finished_goods %}
+                        <tr>
+                            <td>{{ item.product_name }}</td>
+                            <td>{{ item.sku or '-' }}</td>
+                            <td class="text-end">{{ item.total_quantity | round(2) }} L</td>
+                            <td class="text-end">{{ item.avg_cost_per_liter | currency }}</td>
+                            <td class="text-end">{{ item.total_value | currency }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not finished_goods %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">{{ t('no_finished_goods', default='No
+                                finished goods') }}</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <th colspan="4">{{ t('subtotal', default='Subtotal') }}</th>
+                            <th class="text-end">{{ summary.finished_goods.total_value | currency }}</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Work in Progress -->
+    <div class="card mb-4">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">{{ t('work_in_progress', default='Work in Progress') }}</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                    <thead>
+                        <tr>
+                            <th>{{ t('batch', default='Batch') }}</th>
+                            <th>{{ t('product', default='Product') }}</th>
+                            <th>{{ t('status', default='Status') }}</th>
+                            <th class="text-end">{{ t('planned_quantity', default='Planned') }}</th>
+                            <th class="text-end">{{ t('actual_cost', default='Actual Cost') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in work_in_progress %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('batch_cogs', batch_id=item.id) }}">{{ item.batch_number }}</a>
+                            </td>
+                            <td>{{ item.product_name }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'primary' if item.status == 'fermenting' else 'warning' }}">
+                                    {{ item.status }}
+                                </span>
+                            </td>
+                            <td class="text-end">{{ item.planned_quantity | round(2) }} L</td>
+                            <td class="text-end">{{ item.total_cost | currency }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not work_in_progress %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">{{ t('no_wip', default='No work in progress')
+                                }}</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <th colspan="4">{{ t('subtotal', default='Subtotal') }}</th>
+                            <th class="text-end">{{ summary.work_in_progress.total_value | currency }}</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Print Button -->
+    <div class="text-end mb-4">
+        <button onclick="window.print()" class="btn btn-outline-primary">
+            <i class="fas fa-print"></i> {{ t('print_report', default='Print Report') }}
+        </button>
+    </div>
+</div>
+{% endblock %}

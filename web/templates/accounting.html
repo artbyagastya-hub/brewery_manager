@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('nav.accounting') }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>{{ t('nav.accounting') }}</h2>
+    <div>
+        <a href="{{ url_for('create_invoice') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> {{ t('accounting.create_invoice') }}
+        </a>
+    </div>
+</div>
+
+<!-- Tax Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h6 class="card-title">{{ t('accounting.total_subtotal') }}</h6>
+                <h3>{{ "{:,.0f}".format(tax_report.total_subtotal or 0) }} VND</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <h6 class="card-title">{{ t('accounting.total_sct') }}</h6>
+                <h3>{{ "{:,.0f}".format(tax_report.total_sct or 0) }} VND</h3>
+                <small>{{ t('tax.sct_rate') }}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <h6 class="card-title">{{ t('accounting.total_vat') }}</h6>
+                <h3>{{ "{:,.0f}".format(tax_report.total_vat or 0) }} VND</h3>
+                <small>{{ t('tax.vat_rate') }}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h6 class="card-title">{{ t('accounting.grand_total') }}</h6>
+                <h3>{{ "{:,.0f}".format(tax_report.grand_total or 0) }} VND</h3>
+                <small>{{ tax_report.invoice_count or 0 }} {{ t('accounting.invoices') }}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tax Information -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-info-circle"></i> {{ t('accounting.tax_info') }}</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <h6>{{ t('tax.sct') }}</h6>
+                <p class="text-muted">{{ t('tax.sct_desc') }}</p>
+            </div>
+            <div class="col-md-4">
+                <h6>{{ t('tax.vat') }}</h6>
+                <p class="text-muted">{{ t('tax.vat_desc') }}</p>
+            </div>
+            <div class="col-md-4">
+                <h6>{{ t('tax.environmental') }}</h6>
+                <p class="text-muted">{{ t('tax.environmental_desc') }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Invoices List -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-file-invoice"></i> {{ t('accounting.invoices') }}</h5>
+    </div>
+    <div class="card-body">
+        {% if invoices %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>{{ t('accounting.invoice_number') }}</th>
+                        <th>{{ t('accounting.date') }}</th>
+                        <th>{{ t('accounting.customer') }}</th>
+                        <th>{{ t('accounting.subtotal') }}</th>
+                        <th>{{ t('accounting.sct') }}</th>
+                        <th>{{ t('accounting.vat') }}</th>
+                        <th>{{ t('accounting.total') }}</th>
+                        <th>{{ t('common.actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invoice in invoices %}
+                    <tr>
+                        <td><strong>{{ invoice.invoice_number }}</strong></td>
+                        <td>{{ invoice.invoice_date }}</td>
+                        <td>{{ invoice.customer_name }}</td>
+                        <td>{{ "{:,.0f}".format(invoice.subtotal) }}</td>
+                        <td>{{ "{:,.0f}".format(invoice.sct_amount) }}</td>
+                        <td>{{ "{:,.0f}".format(invoice.vat_amount) }}</td>
+                        <td><strong>{{ "{:,.0f}".format(invoice.total) }}</strong></td>
+                        <td>
+                            <a href="{{ url_for('view_invoice', invoice_id=invoice.id) }}"
+                                class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center py-4">{{ t('accounting.no_invoices') }}</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

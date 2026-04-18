@@ -1,0 +1,115 @@
+<!-- Production Report -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h6 class="card-title">{{ t('production.total_batches', 'Total Batches') }}</h6>
+                <h3>{{ report_data.summary.total_batches }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h6 class="card-title">{{ t('production.completed', 'Completed') }}</h6>
+                <h3>{{ report_data.summary.completed }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h6 class="card-title">{{ t('production.in_progress', 'In Progress') }}</h6>
+                <h3>{{ report_data.summary.in_progress }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h6 class="card-title">{{ t('production.efficiency', 'Efficiency') }}</h6>
+                <h3>{{ report_data.summary.efficiency }}%</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">{{ t('production.batch_status', 'Batch Status') }}</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="batchStatusChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">{{ t('production.volume', 'Volume') }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h4>{{ report_data.summary.total_volume }} L</h4>
+                        <p class="text-muted">{{ t('production.planned', 'Planned') }}</p>
+                    </div>
+                    <div class="col-6">
+                        <h4>{{ report_data.summary.actual_volume }} L</h4>
+                        <p class="text-muted">{{ t('production.actual', 'Actual') }}</p>
+                    </div>
+                </div>
+                <div class="progress mt-3" style="height: 25px;">
+                    <div class="progress-bar bg-success" style="width: {{ report_data.summary.efficiency }}%">
+                        {{ report_data.summary.efficiency }}%
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">{{ t('production.by_product', 'Production by Product') }}</h5>
+    </div>
+    <div class="card-body">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>{{ t('common.product', 'Product') }}</th>
+                    <th>{{ t('production.batch_count', 'Batches') }}</th>
+                    <th>{{ t('production.volume', 'Volume (L)') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in report_data.by_product %}
+                <tr>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.count }}</td>
+                    <td>{{ product.volume }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const batchStatusCtx = document.getElementById('batchStatusChart').getContext('2d');
+    new Chart(batchStatusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['{{ t("production.completed", "Completed") }}', '{{ t("production.in_progress", "In Progress") }}', '{{ t("production.planned", "Planned") }}'],
+            datasets: [{
+                data: [{{ report_data.summary.completed }}, {{ report_data.summary.in_progress }}, {{ report_data.summary.planned }}],
+        backgroundColor: ['#28a745', '#ffc107', '#17a2b8']
+            }]
+        },
+        options: {
+        responsive: true
+    }
+    });
+</script>

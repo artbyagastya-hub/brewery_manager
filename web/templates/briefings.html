@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Daily Briefings - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>📋 Daily Briefings</h2>
+    <div>
+        <a href="{{ url_for('add_daily_task') }}?date={{ task_date }}" class="btn btn-primary">
+            <i class="bi bi-plus"></i> Add Task
+        </a>
+        <form method="POST" action="{{ url_for('send_briefing') }}" class="d-inline">
+            <input type="hidden" name="task_date" value="{{ task_date }}">
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-send"></i> Send Briefing
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Date Selector -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3 align-items-center">
+            <div class="col-auto">
+                <label class="form-label mb-0">Date:</label>
+            </div>
+            <div class="col-auto">
+                <input type="date" name="date" class="form-control" value="{{ task_date }}">
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-outline-primary">View</button>
+            </div>
+            <div class="col-auto">
+                <a href="{{ url_for('briefings') }}" class="btn btn-outline-secondary">Today</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h3>{{ briefing.summary.total_tasks }}</h3>
+                <p class="mb-0">Total Tasks</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body text-center">
+                <h3>{{ briefing.summary.pending_tasks }}</h3>
+                <p class="mb-0">Pending</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h3>{{ briefing.summary.completed_tasks }}</h3>
+                <p class="mb-0">Completed</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h3>{{ briefing.summary.tanks_in_use }}</h3>
+                <p class="mb-0">Tanks in Use</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alerts -->
+{% if briefing.low_stock_alerts %}
+<div class="alert alert-warning">
+    <h5><i class="bi bi-exclamation-triangle"></i> Low Stock Alerts ({{ briefing.low_stock_alerts|length }})</h5>
+    <ul class="mb-0">
+        {% for item in briefing.low_stock_alerts %}
+        <li>{{ item.name }}: {{ item.quantity }} {{ item.unit }} (need {{ item.shortage }} more)</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+{% if briefing.overdue_maintenance %}
+<div class="alert alert-danger">
+    <h5><i class="bi bi-wrench"></i> Overdue Maintenance ({{ briefing.overdue_maintenance|length }})</h5>
+    <ul class="mb-0">
+        {% for item in briefing.overdue_maintenance %}
+        <li>{{ item.equipment_name }}: {{ item.task_name }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<!-- Tasks -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">📋 Tasks for {{ task_date }}</h5>
+    </div>
+    <div class="card-body">
+        {% if tasks %}
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Status</th>
+                    <th>Priority</th>
+                    <th>Task</th>
+                    <th>Type</th>
+                    <th>Assigned To</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in tasks %}
+                <tr class="{% if task.status == 'completed' %}table-success{% endif %}">
+                    <td>
+                        {% if task.status == 'completed' %}
+                        <span class="badge bg-success">✓ Completed</span>
+                        {% else %}
+                        <span class="badge bg-warning">⏳ Pending</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span
+                            class="badge {% if task.priority == 'high' %}bg-danger{% elif task.priority == 'normal' %}bg-secondary{% else %}bg-info{% endif %}">
+                            {{ task.priority }}
+                        </span>
+                    </td>
+                    <td>
+                        <strong>{{ task.title }}</strong>
+                        {% if task.description %}
+                        <br><small class="text-muted">{{ task.description }}</small>
+                        {% endif %}
+                    </td>
+                    <td><span class="badge bg-secondary">{{ task.task_type }}</span></td>
+                    <td>{{ task.assigned_to_name or 'Unassigned' }}</td>
+                    <td>
+                        {% if task.status != 'completed' %}
+                        <form method="POST" action="{{ url_for('complete_task', task_id=task.id) }}" class="d-inline">
+                            <input type="hidden" name="completed_by" value="1">
+                            <button type="submit" class="btn btn-success btn-sm">✓ Complete</button>
+                        </form>
+                        {% else %}
+                        <small class="text-muted">
+                            Done by {{ task.completed_by_name or 'Unknown' }}
+                            {% if task.completed_at %} at {{ task.completed_at[:16] }}{% endif %}
+                        </small>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted text-center">No tasks for this date. <a
+                href="{{ url_for('add_daily_task') }}?date={{ task_date }}">Add one</a></p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Tank Status -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">🏭 Tank Status</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% for tank in briefing.tank_status %}
+            <div class="col-md-2 mb-2">
+                <div class="card {% if tank.batch_id %}border-danger{% else %}border-success{% endif %}">
+                    <div class="card-body text-center py-2">
+                        <small><strong>{{ tank.name }}</strong></small><br>
+                        {% if tank.batch_id %}
+                        <span class="badge bg-danger">{{ tank.product_name }}</span>
+                        {% else %}
+                        <span class="badge bg-success">Available</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

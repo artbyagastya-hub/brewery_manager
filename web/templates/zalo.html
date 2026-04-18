@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('nav.zalo') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-comment-dots"></i> {{ t('nav.zalo') }}</h2>
+        <span class="badge bg-warning">{{ t('zalo.demo_mode') }}</span>
+    </div>
+
+    <div class="row">
+        <!-- Send Message -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-paper-plane"></i> {{ t('zalo.send_message') }}
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="/zalo/send">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('zalo.recipient') }}</label>
+                            <input type="text" class="form-control" name="recipient" placeholder="Phone number">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('zalo.template') }}</label>
+                            <select class="form-select" name="template_id" id="templateSelect">
+                                <option value="">{{ t('zalo.custom_message') }}</option>
+                                {% for template in templates %}
+                                <option value="{{ template.id }}" data-content="{{ template.content }}">
+                                    {{ template.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('zalo.message') }}</label>
+                            <textarea class="form-control" name="message" id="messageArea" rows="4"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-paper-plane"></i> {{ t('zalo.send') }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Broadcast -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-broadcast-tower"></i> {{ t('zalo.broadcast') }}
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="/zalo/broadcast">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('zalo.broadcast_message') }}</label>
+                            <textarea class="form-control" name="message" rows="4" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-warning w-100">
+                            <i class="fas fa-broadcast-tower"></i> {{ t('zalo.send_to_all') }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Message History -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-history"></i> {{ t('zalo.message_history') }}
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{{ t('common.date') }}</th>
+                                    <th>{{ t('zalo.recipient') }}</th>
+                                    <th>{{ t('zalo.message') }}</th>
+                                    <th>{{ t('zalo.status') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for msg in messages %}
+                                <tr>
+                                    <td>{{ msg.sent_at }}</td>
+                                    <td>{{ msg.recipient }}</td>
+                                    <td>{{ msg.message[:50] }}{% if msg.message|length > 50 %}...{% endif %}</td>
+                                    <td>
+                                        <span
+                                            class="badge bg-{% if msg.status == 'sent' %}success{% elif msg.status == 'demo' %}warning{% else %}secondary{% endif %}">
+                                            {{ msg.status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">{{ t('common.no_data') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('templateSelect').addEventListener('change', function () {
+        const option = this.options[this.selectedIndex];
+        const content = option.getAttribute('data-content');
+        if (content) {
+            document.getElementById('messageArea').value = content;
+        }
+    });
+</script>
+{% endblock %}

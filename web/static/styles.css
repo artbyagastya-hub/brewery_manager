@@ -1,0 +1,474 @@
+/* Brewery Manager - Main Stylesheet */
+
+:root {
+    --primary-color: #2d2d2d;
+    --secondary-color: #4a4a4a;
+    --accent-color: #6c757d;
+    --dark-bg: #1a1a2e;
+    --card-bg: #ffffff;
+}
+
+/* Loading Spinner */
+.loading-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+}
+
+.loading-overlay.active {
+    display: flex;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Confirmation Modal */
+.confirm-modal .modal-content {
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.confirm-modal .modal-header {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+    border: none;
+}
+
+.confirm-modal .modal-body {
+    padding: 30px;
+    text-align: center;
+}
+
+.confirm-modal .modal-body i {
+    font-size: 4rem;
+    color: #dc3545;
+    margin-bottom: 20px;
+}
+
+/* Sortable Table Headers */
+.sortable {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+}
+
+.sortable:hover {
+    background: rgba(45, 45, 45, 0.1);
+}
+
+.sortable::after {
+    content: ' ⇅';
+    opacity: 0.3;
+}
+
+.sortable.asc::after {
+    content: ' ↑';
+    opacity: 1;
+}
+
+.sortable.desc::after {
+    content: ' ↓';
+    opacity: 1;
+}
+
+/* Search Box */
+.search-box {
+    position: relative;
+}
+
+.search-box input {
+    padding-left: 40px;
+}
+
+.search-box i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+}
+
+/* Pagination */
+.pagination .page-link {
+    color: var(--primary-color);
+}
+
+.pagination .page-item.active .page-link {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+/* Body */
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Navbar */
+.navbar {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+/* Sidebar */
+.sidebar {
+    min-height: calc(100vh - 56px);
+    background: white;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar .nav-link {
+    color: #333;
+    padding: 12px 20px;
+    border-left: 3px solid transparent;
+    transition: all 0.3s;
+}
+
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+    background-color: #f0f0f0;
+    border-left-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.sidebar .nav-link i {
+    width: 25px;
+    margin-right: 10px;
+}
+
+/* Sidebar collapsible groups */
+.sidebar .nav-group-header {
+    padding: 8px 20px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: #6c757d;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+}
+
+.sidebar .nav-group-header:hover {
+    color: var(--primary-color);
+}
+
+.sidebar .nav-group-header i.collapse-icon {
+    transition: transform 0.3s;
+}
+
+.sidebar .nav-group-header.collapsed i.collapse-icon {
+    transform: rotate(-90deg);
+}
+
+.sidebar .nav-group {
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.sidebar .nav-group.collapsed {
+    max-height: 0 !important;
+}
+
+/* Main Content */
+.main-content {
+    padding: 20px;
+}
+
+/* Cards */
+.card {
+    border: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border-radius: 10px 10px 0 0 !important;
+}
+
+/* Stat Cards */
+.stat-card {
+    transition: transform 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    opacity: 0.8;
+}
+
+/* Alert Badge */
+.alert-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+}
+
+/* Tables */
+.table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.table tbody tr {
+    transition: background-color 0.15s;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(45, 45, 45, 0.05);
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+}
+
+.status-planned {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.status-brewing {
+    background-color: #fff3e0;
+    color: #f57c00;
+}
+
+.status-fermenting {
+    background-color: #f3e5f5;
+    color: #7b1fa2;
+}
+
+.status-completed {
+    background-color: #e8f5e9;
+    color: #388e3c;
+}
+
+.status-pending {
+    background-color: #fff8e1;
+    color: #ffa000;
+}
+
+.status-delivered {
+    background-color: #e8f5e9;
+    color: #388e3c;
+}
+
+.status-cancelled {
+    background-color: #ffebee;
+    color: #d32f2f;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 991.98px) {
+    .sidebar {
+        position: fixed;
+        top: 56px;
+        left: -280px;
+        width: 280px;
+        height: calc(100vh - 56px);
+        z-index: 1040;
+        transition: left 0.3s ease;
+        overflow-y: auto;
+    }
+
+    .sidebar.show {
+        left: 0;
+    }
+
+    .sidebar-backdrop {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1030;
+    }
+
+    .sidebar-backdrop.show {
+        display: block;
+    }
+
+    .main-content {
+        padding: 15px;
+    }
+
+    /* Tables to cards on mobile */
+    .table-responsive-stack {
+        display: block;
+    }
+
+    .table-responsive-stack thead {
+        display: none;
+    }
+
+    .table-responsive-stack tbody tr {
+        display: block;
+        margin-bottom: 15px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 10px;
+        background: white;
+    }
+
+    .table-responsive-stack tbody tr td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: none;
+        padding: 8px 0;
+    }
+
+    .table-responsive-stack tbody tr td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #495057;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .stat-card .card-body h2 {
+        font-size: 1.5rem;
+    }
+
+    .stat-icon {
+        font-size: 1.8rem;
+    }
+
+    .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    /* Filter forms accordion on mobile */
+    .filter-form-collapsible .card-body {
+        padding: 1rem;
+    }
+
+    .filter-form-collapsible .row>div {
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Touch-friendly enhancements */
+@media (hover: none) and (pointer: coarse) {
+    .btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .nav-link {
+        padding: 14px 20px;
+    }
+
+    .form-control,
+    .form-select {
+        min-height: 44px;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Accessibility */
+.btn:focus,
+.form-control:focus,
+.form-select:focus,
+.nav-link:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .card {
+        border: 2px solid #000;
+    }
+
+    .btn-primary {
+        background-color: #000;
+        border-color: #000;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

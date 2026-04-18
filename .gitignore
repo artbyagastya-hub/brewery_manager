@@ -1,0 +1,40 @@
+# Brewery Manager .gitignore
+
+# Database files (data, not code - initialize with seed_data.py)
+*.db
+*.db-shm
+*.db-wal
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environment variables (secrets)
+.env
+.env.prod
+
+# Backup files
+backups/
+
+# Runtime data
+data/ai_memory.json
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg

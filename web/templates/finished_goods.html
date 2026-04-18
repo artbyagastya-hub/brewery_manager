@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('finished_goods', default='Finished Goods') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>{{ t('finished_goods', default='Finished Goods Inventory') }}</h2>
+        <a href="{{ url_for('inventory') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> {{ t('back_to_inventory', default='Back to Inventory') }}
+        </a>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6>{{ t('total_products', default='Total Products') }}</h6>
+                    <h3>{{ finished_goods | length }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6>{{ t('total_quantity', default='Total Quantity') }}</h6>
+                    <h3>{{ finished_goods | sum(attribute='total_quantity') or 0 }} L</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6>{{ t('total_value', default='Total Value') }}</h6>
+                    <h3>{{ (finished_goods | sum(attribute='total_value') or 0) | currency }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Finished Goods Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">{{ t('finished_goods_list', default='Finished Goods') }}</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>{{ t('product', default='Product') }}</th>
+                            <th>{{ t('sku', default='SKU') }}</th>
+                            <th class="text-end">{{ t('quantity', default='Quantity') }}</th>
+                            <th class="text-end">{{ t('avg_cost_per_liter', default='Avg Cost/L') }}</th>
+                            <th class="text-end">{{ t('total_value', default='Total Value') }}</th>
+                            <th>{{ t('actions', default='Actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in finished_goods %}
+                        <tr>
+                            <td>
+                                <strong>{{ item.product_name }}</strong>
+                                <br><small class="text-muted">{{ item.style or '' }}</small>
+                            </td>
+                            <td>{{ item.sku or '-' }}</td>
+                            <td class="text-end">{{ item.total_quantity | round(2) }} L</td>
+                            <td class="text-end">{{ item.avg_cost_per_liter | currency }}</td>
+                            <td class="text-end">{{ item.total_value | currency }}</td>
+                            <td>
+                                <a href="{{ url_for('product_details', product_id=item.product_id) }}"
+                                    class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not finished_goods %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">
+                                {{ t('no_finished_goods', default='No finished goods in inventory') }}
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Transfers -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">{{ t('recent_transfers', default='Recent Transfers to Finished Goods') }}</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>{{ t('date', default='Date') }}</th>
+                            <th>{{ t('batch', default='Batch') }}</th>
+                            <th>{{ t('product', default='Product') }}</th>
+                            <th class="text-end">{{ t('quantity', default='Quantity') }}</th>
+                            <th class="text-end">{{ t('unit_cost', default='Unit Cost') }}</th>
+                            <th class="text-end">{{ t('total_value', default='Total Value') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transfer in recent_transfers %}
+                        <tr>
+                            <td>{{ transfer.transfer_date }}</td>
+                            <td>
+                                <a href="{{ url_for('batch_details', batch_id=transfer.batch_id) }}">
+                                    {{ transfer.batch_number }}
+                                </a>
+                            </td>
+                            <td>{{ transfer.product_name }}</td>
+                            <td class="text-end">{{ transfer.quantity | round(2) }} L</td>
+                            <td class="text-end">{{ transfer.unit_cost | currency }}</td>
+                            <td class="text-end">{{ transfer.total_value | currency }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not recent_transfers %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">
+                                {{ t('no_recent_transfers', default='No recent transfers') }}
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

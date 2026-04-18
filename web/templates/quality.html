@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Quality Control - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-check-circle me-2"></i>Quality Control</h2>
+    <a href="/quality/add" class="btn btn-primary"><i class="fas fa-plus me-1"></i>Add Record</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Batch</th>
+                    <th>Test Type</th>
+                    <th>Test Date</th>
+                    <th>Result</th>
+                    <th>Tested By</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for q in records %}
+                <tr>
+                    <td>{{ q.id }}</td>
+                    <td>{{ q.batch_number or 'N/A' }}</td>
+                    <td>{{ q.test_type }}</td>
+                    <td>{{ q.test_date }}</td>
+                    <td><span class="badge bg-{{ 'success' if q.result == 'pass' else 'danger' }}">{{ q.result | upper
+                            }}</span></td>
+                    <td>{{ q.tested_by or 'N/A' }}</td>
+                    <td>
+                        <a href="/quality/{{ q.id }}/edit" class="btn btn-sm btn-outline-primary"><i
+                                class="fas fa-edit"></i></a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center">No quality records found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

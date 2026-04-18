@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('traceability.lots', 'Lot Inventory') }} - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-boxes me-2"></i>{{ t('traceability.lots', 'Lot Inventory') }}</h2>
+        <div>
+            <a href="{{ url_for('forward_trace') }}" class="btn btn-outline-info me-2">
+                <i class="fas fa-search me-1"></i>{{ t('traceability.forward', 'Forward Trace') }}
+            </a>
+            <a href="{{ url_for('backward_trace') }}" class="btn btn-outline-info me-2">
+                <i class="fas fa-search me-1"></i>{{ t('traceability.backward', 'Backward Trace') }}
+            </a>
+            <a href="{{ url_for('cogs_summary') }}" class="btn btn-outline-success me-2">
+                <i class="fas fa-chart-pie me-1"></i>{{ t('traceability.cogs_summary', 'COGS Summary') }}
+            </a>
+            <a href="{{ url_for('receive_lot') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>{{ t('traceability.receive_lot', 'Receive Lot') }}
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">{{ t('traceability.total_lots', 'Total Active Lots') }}</h6>
+                    <h3>{{ lots|length }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <h6 class="card-title">{{ t('traceability.expiring_soon', 'Expiring Soon') }}</h6>
+                    <h3>{{ lots|selectattr('expiry_status', 'equalto', 'expiring_soon')|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h6 class="card-title">{{ t('traceability.expired', 'Expired') }}</h6>
+                    <h3>{{ lots|selectattr('expiry_status', 'equalto', 'expired')|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-title">{{ t('traceability.total_value', 'Total Value') }}</h6>
+                    <h3>{{ lots|sum(attribute='quantity_remaining')|round(2) }} {{ lots[0].unit if lots else '' }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lots Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">{{ t('traceability.lot_list', 'Lot List') }}</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="lotsTable">
+                    <thead>
+                        <tr>
+                            <th>{{ t('traceability.lot_number', 'Lot Number') }}</th>
+                            <th>{{ t('traceability.material', 'Material') }}</th>
+                            <th>{{ t('traceability.category', 'Category') }}</th>
+                            <th>{{ t('traceability.supplier', 'Supplier') }}</th>
+                            <th>{{ t('traceability.received', 'Received') }}</th>
+                            <th>{{ t('traceability.remaining', 'Remaining') }}</th>
+                            <th>{{ t('traceability.unit', 'Unit') }}</th>
+                            <th>{{ t('traceability.cost_unit', 'Cost/Unit') }}</th>
+                            <th>{{ t('traceability.expiry', 'Expiry') }}</th>
+                            <th>{{ t('traceability.status', 'Status') }}</th>
+                            <th>{{ t('common.actions', 'Actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lot in lots %}
+                        <tr
+                            class="{% if lot.expiry_status == 'expired' %}table-danger{% elif lot.expiry_status == 'expiring_soon' %}table-warning{% endif %}">
+                            <td><strong>{{ lot.lot_number }}</strong></td>
+                            <td>{{ lot.material_name }}</td>
+                            <td><span class="badge bg-secondary">{{ lot.category }}</span></td>
+                            <td>{{ lot.supplier or '-' }}</td>
+                            <td>{{ lot.received_date }}</td>
+                            <td>{{ lot.quantity_remaining|round(2) }}</td>
+                            <td>{{ lot.unit }}</td>
+                            <td>{{ lot.cost_per_unit|currency }}</td>
+                            <td>
+                                {% if lot.expiry_date %}
+                                {{ lot.expiry_date }}
+                                {% if lot.expiry_status == 'expired' %}
+                                <span class="badge bg-danger">{{ t('traceability.expired', 'Expired') }}</span>
+                                {% elif lot.expiry_status == 'expiring_soon' %}
+                                <span class="badge bg-warning">{{ t('traceability.expiring_soon', 'Expiring Soon')
+                                    }}</span>
+                                {% endif %}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span
+                                    class="badge {% if lot.status == 'active' %}bg-success{% elif lot.status == 'depleted' %}bg-secondary{% else %}bg-warning{% endif %}">
+                                    {{ lot.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('lot_details', lot_id=lot.id) }}"
+                                    class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('#lotsTable').DataTable({
+            "order": [[8, "asc"]],  // Sort by expiry date
+            "pageLength": 25
+        });
+    });
+</script>
+{% endblock %}

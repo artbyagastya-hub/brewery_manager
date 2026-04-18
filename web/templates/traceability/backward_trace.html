@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('traceability.backward_trace', 'Backward Trace') }} - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-search-minus me-2"></i>{{ t('traceability.backward_trace', 'Backward Trace') }}</h2>
+        <a href="{{ url_for('traceability_lots') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>{{ t('common.back', 'Back to Lots') }}
+        </a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">{{ t('traceability.select_batch', 'Select Batch to Trace') }}</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-8">
+                    <select class="form-select" name="batch_id" required>
+                        <option value="">{{ t('traceability.select_batch_placeholder', 'Select a batch...') }}</option>
+                        {% for batch in batches %}
+                        <option value="{{ batch.id }}" {% if selected_batch and selected_batch.id==batch.id %}selected{%
+                            endif %}>
+                            {{ batch.batch_number }} - {{ batch.product_name }} ({{ batch.status }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-1"></i>{{ t('traceability.trace', 'Trace') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if selected_batch %}
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">{{ t('traceability.trace_results', 'Trace Results') }}: {{ selected_batch.batch_number }}
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h6>{{ t('traceability.batch_info', 'Batch Information') }}</h6>
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <th>{{ t('traceability.product', 'Product') }}</th>
+                            <td>{{ selected_batch.product_name }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('traceability.planned_qty', 'Planned Qty') }}</th>
+                            <td>{{ selected_batch.planned_quantity }} L</td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('traceability.actual_qty', 'Actual Qty') }}</th>
+                            <td>{{ selected_batch.actual_quantity or '-' }} L</td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('traceability.status', 'Status') }}</th>
+                            <td><span class="badge bg-info">{{ selected_batch.status }}</span></td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6>{{ t('traceability.materials_summary', 'Materials Summary') }}</h6>
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <th>{{ t('traceability.total_materials', 'Total Materials') }}</th>
+                            <td>{{ trace_data|length }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('traceability.total_cost', 'Total Cost') }}</th>
+                            <td>{{ trace_data|sum(attribute='cost')|currency }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <h6>{{ t('traceability.materials_used', 'Materials Used') }}</h6>
+            {% if trace_data %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>{{ t('traceability.lot_number', 'Lot Number') }}</th>
+                            <th>{{ t('traceability.material', 'Material') }}</th>
+                            <th>{{ t('traceability.category', 'Category') }}</th>
+                            <th>{{ t('traceability.supplier', 'Supplier') }}</th>
+                            <th class="text-end">{{ t('traceability.qty_used', 'Qty Used') }}</th>
+                            <th class="text-end">{{ t('traceability.cost', 'Cost') }}</th>
+                            <th>{{ t('traceability.received_date', 'Received') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in trace_data %}
+                        <tr>
+                            <td><a href="{{ url_for('lot_details', lot_id=item.lot_id) }}">{{ item.lot_number }}</a>
+                            </td>
+                            <td>{{ item.material_name }}</td>
+                            <td><span class="badge bg-secondary">{{ item.category }}</span></td>
+                            <td>{{ item.supplier or '-' }}</td>
+                            <td class="text-end">{{ item.quantity_used|round(2) }} {{ item.unit }}</td>
+                            <td class="text-end">{{ item.cost|currency }}</td>
+                            <td>{{ item.received_date }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted">{{ t('traceability.no_materials', 'No materials recorded for this batch yet.') }}</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Add Product - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-plus me-2"></i>Add Product</h2>
+    <a href="/products" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i>Back</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Product Name *</label>
+                    <input type="text" name="name" class="form-control" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Style</label>
+                    <input type="text" name="style" class="form-control" placeholder="e.g., IPA, Lager, Stout">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">ABV (%)</label>
+                    <input type="number" step="0.1" name="abv" class="form-control">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">IBU</label>
+                    <input type="number" name="ibu" class="form-control">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Color (SRM)</label>
+                    <input type="number" name="color_srm" class="form-control">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Unit *</label>
+                    <select name="unit" class="form-select" required>
+                        <option value="bottle">Bottle</option>
+                        <option value="can">Can</option>
+                        <option value="keg">Keg</option>
+                        <option value="liter">Liter</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Volume (ml)</label>
+                    <input type="number" name="volume_ml" class="form-control">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Price per Unit (VND) *</label>
+                    <input type="number" step="0.01" name="price_per_unit" class="form-control" required>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea name="description" class="form-control" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Save Product</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

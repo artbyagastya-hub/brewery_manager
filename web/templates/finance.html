@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Finance - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-dollar-sign me-2"></i>Financial Transactions</h2>
+    <a href="/finance/add" class="btn btn-primary"><i class="fas fa-plus me-1"></i>Add Transaction</a>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-body">
+                <h6 class="card-title">Total Income</h6>
+                <h3>{{ (summary.total_income or 0) | currency }} VND</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-danger mb-3">
+            <div class="card-body">
+                <h6 class="card-title">Total Expenses</h6>
+                <h3>{{ (summary.total_expense or 0) | currency }} VND</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-info mb-3">
+            <div class="card-body">
+                <h6 class="card-title">Net Profit</h6>
+                <h3>{{ (summary.net_profit or 0) | currency }} VND</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <select name="type" class="form-select">
+                    <option value="">All Types</option>
+                    <option value="income" {% if type=='income' %}selected{% endif %}>Income</option>
+                    <option value="expense" {% if type=='expense' %}selected{% endif %}>Expense</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-outline-primary">Filter</button>
+                <a href="/finance" class="btn btn-outline-secondary">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in transactions %}
+                <tr>
+                    <td>{{ t.id }}</td>
+                    <td>{{ t.transaction_date }}</td>
+                    <td><span class="badge bg-{{ 'success' if t.transaction_type == 'income' else 'danger' }}">{{
+                            t.transaction_type | title }}</span></td>
+                    <td>{{ t.category or 'N/A' }}</td>
+                    <td>{{ t.amount | currency }} VND</td>
+                    <td>{{ t.description or 'N/A' }}</td>
+                    <td>
+                        <a href="/finance/{{ t.id }}/edit" class="btn btn-sm btn-outline-primary"><i
+                                class="fas fa-edit"></i></a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center">No transactions found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

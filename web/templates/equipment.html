@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Equipment - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>🔧 Equipment Management</h2>
+    <div>
+        <a href="{{ url_for('tanks') }}" class="btn btn-primary">
+            <i class="bi bi-box-seam"></i> Tank View
+        </a>
+        <a href="{{ url_for('maintenance') }}" class="btn btn-warning">
+            <i class="bi bi-wrench"></i> Maintenance
+        </a>
+    </div>
+</div>
+
+<!-- Filter -->
+<div class="mb-3">
+    <div class="btn-group">
+        <a href="{{ url_for('equipment') }}"
+            class="btn btn-outline-secondary {% if not type %}active{% endif %}">All</a>
+        <a href="{{ url_for('equipment', type='fermenter') }}"
+            class="btn btn-outline-secondary {% if type == 'fermenter' %}active{% endif %}">Fermenters</a>
+        <a href="{{ url_for('equipment', type='brewhouse') }}"
+            class="btn btn-outline-secondary {% if type == 'brewhouse' %}active{% endif %}">Brewhouse</a>
+        <a href="{{ url_for('equipment', type='processing') }}"
+            class="btn btn-outline-secondary {% if type == 'processing' %}active{% endif %}">Processing</a>
+        <a href="{{ url_for('equipment', type='packaging') }}"
+            class="btn btn-outline-secondary {% if type == 'packaging' %}active{% endif %}">Packaging</a>
+        <a href="{{ url_for('equipment', type='cleaning') }}"
+            class="btn btn-outline-secondary {% if type == 'cleaning' %}active{% endif %}">Cleaning</a>
+    </div>
+</div>
+
+<!-- Equipment Grid -->
+<div class="row">
+    {% for eq in equipment %}
+    <div class="col-md-4 mb-3">
+        <div
+            class="card {% if eq.status == 'in_use' %}border-danger{% elif eq.status == 'maintenance' %}border-warning{% else %}border-success{% endif %}">
+            <div class="card-body">
+                <h5 class="card-title">{{ eq.name }}</h5>
+                <p class="card-text">
+                    <span class="badge bg-secondary">{{ eq.equipment_type }}</span>
+                    {% if eq.capacity %}
+                    <span class="badge bg-info">{{ eq.capacity }}{{ eq.capacity_unit }}</span>
+                    {% endif %}
+                    <span
+                        class="badge {% if eq.status == 'available' %}bg-success{% elif eq.status == 'in_use' %}bg-danger{% else %}bg-warning{% endif %}">
+                        {{ eq.status }}
+                    </span>
+                </p>
+                {% if eq.last_cleaned %}
+                <p class="text-muted small">Last cleaned: {{ eq.last_cleaned[:10] }}</p>
+                {% endif %}
+                <div class="btn-group btn-group-sm">
+                    <form method="POST" action="{{ url_for('clean_equipment', equipment_id=eq.id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-outline-success btn-sm">✓ Cleaned</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('update_equipment_status_route', equipment_id=eq.id) }}"
+                        class="d-inline">
+                        <input type="hidden" name="status"
+                            value="{% if eq.status == 'available' %}maintenance{% else %}available{% endif %}">
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">
+                            {% if eq.status == 'available' %}🔧 Maintenance{% else %}✓ Available{% endif %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

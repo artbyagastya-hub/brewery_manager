@@ -1,0 +1,157 @@
+<!-- Sales Report -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h6 class="card-title">{{ t('sales.total_orders', 'Total Orders') }}</h6>
+                <h3>{{ report_data.summary.total_orders }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h6 class="card-title">{{ t('sales.total_revenue', 'Total Revenue') }}</h6>
+                <h3>{{ report_data.summary.total_revenue | currency }} VND</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h6 class="card-title">{{ t('sales.avg_order', 'Avg Order Value') }}</h6>
+                <h3>{{ report_data.summary.avg_order_value | currency }} VND</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h6 class="card-title">{{ t('sales.period', 'Period') }}</h6>
+                <h6>{{ report_data.period.start }} - {{ report_data.period.end }}</h6>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">{{ t('sales.revenue_trend', 'Revenue Trend') }}</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">{{ t('sales.order_status', 'Order Status') }}</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">{{ t('sales.top_products', 'Top Products') }}</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>{{ t('common.product', 'Product') }}</th>
+                            <th>{{ t('common.quantity', 'Quantity') }}</th>
+                            <th>{{ t('common.revenue', 'Revenue') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in report_data.top_products %}
+                        <tr>
+                            <td>{{ product.name }}</td>
+                            <td>{{ product.quantity }}</td>
+                            <td>{{ product.revenue | currency }} VND</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">{{ t('sales.top_customers', 'Top Customers') }}</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>{{ t('common.customer', 'Customer') }}</th>
+                            <th>{{ t('common.total', 'Total') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in report_data.top_customers %}
+                        <tr>
+                            <td>{{ customer.name }}</td>
+                            <td>{{ customer.total | currency }} VND</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Revenue Chart
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: {{ report_data.daily_revenue.keys() | list | tojson }},
+        datasets: [{
+            label: '{{ t("sales.daily_revenue", "Daily Revenue") }}',
+            data: {{ report_data.daily_revenue.values() | list | tojson }},
+        borderColor: 'rgb(75, 192, 192)',
+        tension: 0.1,
+        fill: false
+        }]
+    },
+        options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+    // Status Chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ report_data.status_breakdown.keys() | list | tojson }},
+        datasets: [{
+            data: {{ report_data.status_breakdown.values() | list | tojson }},
+        backgroundColor: [
+            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'
+        ]
+        }]
+    },
+        options: {
+        responsive: true
+    }
+});
+</script>

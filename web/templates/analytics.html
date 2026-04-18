@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('analytics', 'Analytics') }} - {{ t('brewery_manager', 'Brewery Manager') }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>📊 {{ t('analytics_dashboard', 'Analytics Dashboard') }}</h2>
+    <div>
+        <a href="/agent/logs" class="btn btn-outline-primary">
+            🤖 {{ t('agent_logs', 'Agent Logs') }}
+        </a>
+        <a href="/agent/rules" class="btn btn-outline-secondary ms-2">
+            ⚙️ {{ t('agent_rules', 'Agent Rules') }}
+        </a>
+    </div>
+</div>
+
+<!-- Agent Status Card -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">🤖 {{ t('agent_status', 'Agent Status') }}</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="text-center">
+                    <h3 class="text-success">{{ agent_status.active_rules }}</h3>
+                    <p class="text-muted">{{ t('active_rules', 'Active Rules') }}</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <h3 class="text-info">{{ agent_status.total_rules }}</h3>
+                    <p class="text-muted">{{ t('total_rules', 'Total Rules') }}</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <h3 class="text-warning">{{ scheduler_status.running and '✅' or '❌' }}</h3>
+                    <p class="text-muted">{{ t('scheduler', 'Scheduler') }}</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <h3 class="text-primary">{{ agent_status.recent_actions|length }}</h3>
+                    <p class="text-muted">{{ t('recent_actions', 'Recent Actions') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h6>{{ t('monthly_revenue', 'Monthly Revenue') }}</h6>
+                <h3>{{ dashboard.monthly_revenue|currency }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <h6>{{ t('monthly_expenses', 'Monthly Expenses') }}</h6>
+                <h3>{{ dashboard.monthly_expenses|currency }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h6>{{ t('net_profit', 'Net Profit') }}</h6>
+                <h3>{{ dashboard.monthly_profit|currency }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <h6>{{ t('active_batches', 'Active Batches') }}</h6>
+                <h3>{{ dashboard.active_batches }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">📈 {{ t('revenue_trend', 'Revenue Trend (6 Months)') }}</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">🍺 {{ t('production_status', 'Production Status') }}</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="productionChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rules by Category -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">📋 {{ t('rules_by_category', 'Rules by Category') }}</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>{{ t('category', 'Category') }}</th>
+                            <th>{{ t('active', 'Active') }}</th>
+                            <th>{{ t('total', 'Total') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for category, counts in agent_status.rules_by_category.items() %}
+                        <tr>
+                            <td>{{ category|title }}</td>
+                            <td><span class="badge bg-success">{{ counts.active }}</span></td>
+                            <td>{{ counts.total }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">⏰ {{ t('scheduled_jobs', 'Scheduled Jobs') }}</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>{{ t('job', 'Job') }}</th>
+                            <th>{{ t('next_run', 'Next Run') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for job in scheduler_status.jobs %}
+                        <tr>
+                            <td>{{ job.name }}</td>
+                            <td><small>{{ job.next_run }}</small></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Agent Actions -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">🤖 {{ t('recent_agent_actions', 'Recent Agent Actions') }}</h5>
+    </div>
+    <div class="card-body">
+        {% if agent_status.recent_actions %}
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>{{ t('time', 'Time') }}</th>
+                    <th>{{ t('rule', 'Rule') }}</th>
+                    <th>{{ t('category', 'Category') }}</th>
+                    <th>{{ t('status', 'Status') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in agent_status.recent_actions %}
+                <tr>
+                    <td><small>{{ log.created_at }}</small></td>
+                    <td>{{ log.rule_name }}</td>
+                    <td><span class="badge bg-secondary">{{ log.category }}</span></td>
+                    <td>
+                        {% if log.status == 'completed' %}
+                        <span class="badge bg-success">{{ log.status }}</span>
+                        {% elif log.status == 'error' %}
+                        <span class="badge bg-danger">{{ log.status }}</span>
+                        {% else %}
+                        <span class="badge bg-warning">{{ log.status }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted">{{ t('no_recent_actions', 'No recent agent actions') }}</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Revenue Chart
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: {{ months| tojson }},
+        datasets: [{
+            label: '{{ t("revenue", "Revenue") }}',
+            data: {{ revenues| tojson }},
+        borderColor: 'rgb(75, 192, 192)',
+        tension: 0.1
+            }, {
+            label: '{{ t("expenses", "Expenses") }}',
+            data: {{ expenses| tojson }},
+        borderColor: 'rgb(255, 99, 132)',
+        tension: 0.1
+            }]
+        },
+        options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'top' }
+        }
+    }
+    });
+
+    // Production Chart
+    const productionCtx = document.getElementById('productionChart').getContext('2d');
+    new Chart(productionCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ batch_labels| tojson }},
+        datasets: [{
+            data: {{ batch_counts| tojson }},
+        backgroundColor: [
+            'rgb(255, 99, 132)',
+            'rgb(54, 162, 235)',
+            'rgb(255, 205, 86)',
+            'rgb(75, 192, 192)'
+        ]
+            }]
+        },
+        options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'bottom' }
+        }
+    }
+    });
+</script>
+{% endblock %}

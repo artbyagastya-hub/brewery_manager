@@ -1,0 +1,344 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('edit_recipe', default='Edit Recipe') }} - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">🍺 {{ t('edit_recipe', default='Edit Recipe') }}: {{ recipe.name }}</h1>
+        <div>
+            <a href="{{ url_for('recipe_details', recipe_id=recipe.id) }}" class="btn btn-info">
+                <i class="fas fa-eye"></i> {{ t('view_details', default='View Details') }}
+            </a>
+            <a href="{{ url_for('recipes') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> {{ t('back', default='Back') }}
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Recipe Form -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ t('recipe_details', default='Recipe Details') }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">{{ t('name', default='Name') }} *</label>
+                                    <input type="text" name="name" class="form-control" value="{{ recipe.name }}"
+                                        required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">{{ t('style', default='Style') }}</label>
+                                    <input type="text" name="style" class="form-control"
+                                        value="{{ recipe.style or '' }}" placeholder="e.g., IPA, Stout, Pilsner">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">{{ t('batch_size', default='Batch Size') }} *</label>
+                                    <div class="input-group">
+                                        <input type="number" name="batch_size" class="form-control"
+                                            value="{{ recipe.batch_size }}" step="0.1" required>
+                                        <select name="batch_size_unit" class="form-select">
+                                            <option value="L" {% if recipe.batch_size_unit=='L' %}selected{% endif %}>L
+                                            </option>
+                                            <option value="gal" {% if recipe.batch_size_unit=='gal' %}selected{% endif
+                                                %}>gal</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">{{ t('boil_time', default='Boil Time (min)') }}</label>
+                                    <input type="number" name="boil_time" class="form-control"
+                                        value="{{ recipe.boil_time or 60 }}">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">{{ t('efficiency', default='Efficiency (%)') }}</label>
+                                    <input type="number" name="efficiency" class="form-control"
+                                        value="{{ recipe.efficiency or 75 }}" step="0.1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label class="form-label">{{ t('og', default='OG') }}</label>
+                                    <input type="number" name="og" class="form-control" step="0.001"
+                                        value="{{ recipe.og or '' }}" placeholder="1.050">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label class="form-label">{{ t('fg', default='FG') }}</label>
+                                    <input type="number" name="fg" class="form-control" step="0.001"
+                                        value="{{ recipe.fg or '' }}" placeholder="1.012">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="mb-3">
+                                    <label class="form-label">{{ t('abv', default='ABV (%)') }}</label>
+                                    <input type="number" name="abv" class="form-control" step="0.1"
+                                        value="{{ recipe.abv or '' }}" placeholder="5.0">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="mb-3">
+                                    <label class="form-label">{{ t('ibu', default='IBU') }}</label>
+                                    <input type="number" name="ibu" class="form-control" step="0.1"
+                                        value="{{ recipe.ibu or '' }}" placeholder="35">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="mb-3">
+                                    <label class="form-label">{{ t('srm', default='SRM') }}</label>
+                                    <input type="number" name="srm" class="form-control" step="0.1"
+                                        value="{{ recipe.srm or '' }}" placeholder="10">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('product', default='Link to Product') }}</label>
+                            <select name="product_id" class="form-select">
+                                <option value="">-- {{ t('none', default='None') }} --</option>
+                                {% for product in products %}
+                                <option value="{{ product.id }}" {% if recipe.product_id==product.id %}selected{% endif
+                                    %}>{{ product.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('description', default='Description') }}</label>
+                            <textarea name="description" class="form-control"
+                                rows="3">{{ recipe.description or '' }}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('notes', default='Notes') }}</label>
+                            <textarea name="notes" class="form-control" rows="2">{{ recipe.notes or '' }}</textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> {{ t('save', default='Save') }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ingredients Sidebar -->
+        <div class="col-lg-4">
+            <!-- Fermentables -->
+            <div class="card shadow mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ t('fermentables', default='Fermentables') }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if recipe.fermentables %}
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>{{ t('name', default='Name') }}</th>
+                                <th>{{ t('amount', default='Amount') }}</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for f in recipe.fermentables %}
+                            <tr>
+                                <td>{{ f.name }}</td>
+                                <td>{{ f.amount }} {{ f.unit }}</td>
+                                <td>
+                                    <form method="POST"
+                                        action="{{ url_for('delete_recipe_fermentable', recipe_id=recipe.id, fermentable_id=f.id) }}"
+                                        class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            onclick="return confirm('{{ t('confirm_delete', default='Are you sure?') }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p class="text-muted">{{ t('no_fermentables', default='No fermentables added yet') }}</p>
+                    {% endif %}
+
+                    <hr>
+                    <form method="POST" action="{{ url_for('add_recipe_fermentable', recipe_id=recipe.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-2">
+                            <input type="text" name="name" class="form-control form-control-sm"
+                                placeholder="{{ t('name', default='Name') }}" required>
+                        </div>
+                        <div class="input-group input-group-sm mb-2">
+                            <input type="number" name="amount" class="form-control"
+                                placeholder="{{ t('amount', default='Amount') }}" step="0.01" required>
+                            <select name="unit" class="form-select">
+                                <option value="kg">kg</option>
+                                <option value="g">g</option>
+                                <option value="lb">lb</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="fas fa-plus"></i> {{ t('add', default='Add') }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Hops -->
+            <div class="card shadow mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ t('hops', default='Hops') }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if recipe.hops %}
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>{{ t('name', default='Name') }}</th>
+                                <th>{{ t('amount', default='Amount') }}</th>
+                                <th>{{ t('time', default='Time') }}</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for h in recipe.hops %}
+                            <tr>
+                                <td>{{ h.name }}</td>
+                                <td>{{ h.amount }} {{ h.unit }}</td>
+                                <td>{{ h.boil_time }} min</td>
+                                <td>
+                                    <form method="POST"
+                                        action="{{ url_for('delete_recipe_hop', recipe_id=recipe.id, hop_id=h.id) }}"
+                                        class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            onclick="return confirm('{{ t('confirm_delete', default='Are you sure?') }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p class="text-muted">{{ t('no_hops', default='No hops added yet') }}</p>
+                    {% endif %}
+
+                    <hr>
+                    <form method="POST" action="{{ url_for('add_recipe_hop', recipe_id=recipe.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-2">
+                            <input type="text" name="name" class="form-control form-control-sm"
+                                placeholder="{{ t('name', default='Name') }}" required>
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <div class="input-group input-group-sm">
+                                    <input type="number" name="amount" class="form-control"
+                                        placeholder="{{ t('amount', default='Amount') }}" step="0.1" required>
+                                    <select name="unit" class="form-select">
+                                        <option value="g">g</option>
+                                        <option value="oz">oz</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="input-group input-group-sm">
+                                    <input type="number" name="boil_time" class="form-control"
+                                        placeholder="{{ t('time', default='Time') }}" required>
+                                    <span class="input-group-text">min</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="fas fa-plus"></i> {{ t('add', default='Add') }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Yeasts -->
+            <div class="card shadow mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ t('yeasts', default='Yeasts') }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if recipe.yeasts %}
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>{{ t('name', default='Name') }}</th>
+                                <th>{{ t('lab', default='Lab') }}</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for y in recipe.yeasts %}
+                            <tr>
+                                <td>{{ y.name }}</td>
+                                <td>{{ y.lab or '-' }}</td>
+                                <td>
+                                    <form method="POST"
+                                        action="{{ url_for('delete_recipe_yeast', recipe_id=recipe.id, yeast_id=y.id) }}"
+                                        class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            onclick="return confirm('{{ t('confirm_delete', default='Are you sure?') }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p class="text-muted">{{ t('no_yeasts', default='No yeasts added yet') }}</p>
+                    {% endif %}
+
+                    <hr>
+                    <form method="POST" action="{{ url_for('add_recipe_yeast', recipe_id=recipe.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-2">
+                            <input type="text" name="name" class="form-control form-control-sm"
+                                placeholder="{{ t('name', default='Name') }}" required>
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" name="lab" class="form-control form-control-sm"
+                                placeholder="{{ t('lab', default='Lab (e.g., Wyeast, White Labs)') }}">
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="fas fa-plus"></i> {{ t('add', default='Add') }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,822 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
+    <div class="d-flex align-items-center gap-3">
+        <span id="live-indicator" class="badge bg-success">
+            <i class="fas fa-circle blink me-1"></i>{{ t('live', default='LIVE') }}
+        </span>
+        <span class="text-muted" id="last-update">{{ now }}</span>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-body">
+                <h6 class="card-title">Monthly Revenue</h6>
+                <h2>{{ (data.monthly_revenue or 0) | currency }} VND</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-danger mb-3">
+            <div class="card-body">
+                <h6 class="card-title">Monthly Expenses</h6>
+                <h2>{{ (data.monthly_expenses or 0) | currency }} VND</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info mb-3">
+            <div class="card-body">
+                <h6 class="card-title">Monthly Profit</h6>
+                <h2>{{ (data.monthly_profit or 0) | currency }} VND</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-warning text-dark">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Pending Orders</h6>
+                        <h2>{{ data.pending_orders }}</h2>
+                    </div>
+                    <i class="fas fa-clock stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Active Batches</h6>
+                        <h2>{{ data.active_batches }}</h2>
+                    </div>
+                    <i class="fas fa-flask stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Total Customers</h6>
+                        <h2>{{ data.total_customers }}</h2>
+                    </div>
+                    <i class="fas fa-users stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-secondary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Total Products</h6>
+                        <h2>{{ data.total_products }}</h2>
+                    </div>
+                    <i class="fas fa-beer stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-dark text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Total Staff</h6>
+                        <h2>{{ data.total_staff }}</h2>
+                    </div>
+                    <i class="fas fa-user-tie stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if low_stock %}
+<div class="card mb-4">
+    <div class="card-header bg-danger text-white">
+        <i class="fas fa-exclamation-triangle me-2"></i>Low Stock Alerts
+    </div>
+    <div class="card-body">
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Material</th>
+                    <th>Current</th>
+                    <th>Minimum</th>
+                    <th>Shortage</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in low_stock %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.quantity }} {{ item.unit }}</td>
+                    <td>{{ item.min_quantity }} {{ item.unit }}</td>
+                    <td class="text-danger">{{ item.shortage }} {{ item.unit }}</td>
+                    <td><a href="/inventory" class="btn btn-sm btn-warning">Restock</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if expiring %}
+<div class="card mb-4">
+    <div class="card-header bg-warning text-dark">
+        <i class="fas fa-clock me-2"></i>Expiring Soon (30 days)
+    </div>
+    <div class="card-body">
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Material</th>
+                    <th>Expires</th>
+                    <th>Days Left</th>
+                    <th>Quantity</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in expiring %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.expiry_date }}</td>
+                    <td>{{ item.days_remaining | int }} days</td>
+                    <td>{{ item.quantity }} {{ item.unit }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<div class="card mb-4">
+    <div class="card-header"><i class="fas fa-industry me-2"></i>Fermenter Status</div>
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-center gap-4">
+            {% for tank in tanks %}
+            <div
+                class="unitank-wrapper {% if tank.capacity >= 2000 %}tank-large{% elif tank.capacity >= 800 %}tank-medium{% else %}tank-small{% endif %}">
+                <svg class="unitank-svg" viewBox="0 0 120 200" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Dome top -->
+                    <ellipse cx="60" cy="25" rx="35" ry="15"
+                        fill="{% if tank.batch_id %}{{ tank.srm_color | default('#c57d2b') }}{% else %}#ffffff{% endif %}"
+                        opacity="0.8"
+                        stroke="{% if tank.batch_id %}{{ tank.srm_color | default('#c57d2b') }}{% else %}#6b7280{% endif %}"
+                        stroke-width="1" />
+                    <!-- Cylindrical body -->
+                    <rect x="25" y="25" width="70" height="100"
+                        fill="{% if tank.batch_id %}{{ tank.srm_color | default('#c57d2b') }}{% else %}#ffffff{% endif %}"
+                        opacity="0.8"
+                        stroke="{% if tank.batch_id %}{{ tank.srm_color | default('#c57d2b') }}{% else %}#6b7280{% endif %}"
+                        stroke-width="1" />
+                    <!-- Conical bottom -->
+                    <polygon points="25,125 95,125 75,175 45,175"
+                        fill="{% if tank.batch_id %}{{ tank.srm_color | default('#c57d2b') }}{% else %}#ffffff{% endif %}"
+                        opacity="0.8"
+                        stroke="{% if tank.batch_id %}{{ tank.srm_color | default('#c57d2b') }}{% else %}#6b7280{% endif %}"
+                        stroke-width="1" />
+                    <!-- Bottom outlet -->
+                    <rect x="50" y="175" width="20" height="10"
+                        fill="{% if tank.batch_id %}{{ tank.srm_color | default('#c57d2b') }}{% else %}#ffffff{% endif %}"
+                        stroke="{% if tank.batch_id %}{{ tank.srm_color | default('#c57d2b') }}{% else %}#6b7280{% endif %}"
+                        stroke-width="1" />
+                    <!-- Sight glass -->
+                    <rect x="30" y="60" width="8" height="40" fill="#fff" opacity="0.3" />
+                    <!-- Top port -->
+                    <circle cx="60" cy="25" r="8" fill="#fff" opacity="0.3" />
+                    <!-- Sample valve -->
+                    <rect x="82" y="80" width="10" height="6"
+                        fill="{% if tank.batch_id %}{{ tank.srm_color | default('#c57d2b') }}{% else %}#ffffff{% endif %}"
+                        stroke="{% if tank.batch_id %}{{ tank.srm_color | default('#c57d2b') }}{% else %}#6b7280{% endif %}"
+                        stroke-width="1" />
+
+                    <!-- Fermenting bubbles animation for active tanks -->
+                    {% if tank.batch_id %}
+                    <g class="bubbles">
+                        <circle cx="40" cy="70" r="3" fill="rgba(255,255,255,0.7)">
+                            <animate attributeName="cy" values="70;40;70" dur="3s" repeatCount="indefinite" />
+                            <animate attributeName="opacity" values="0.7;0.2;0.7" dur="3s" repeatCount="indefinite" />
+                        </circle>
+                        <circle cx="55" cy="85" r="2.5" fill="rgba(255,255,255,0.6)">
+                            <animate attributeName="cy" values="85;50;85" dur="2.5s" repeatCount="indefinite" />
+                            <animate attributeName="opacity" values="0.6;0.15;0.6" dur="2.5s"
+                                repeatCount="indefinite" />
+                        </circle>
+                        <circle cx="62" cy="75" r="2" fill="rgba(255,255,255,0.5)">
+                            <animate attributeName="cy" values="75;35;75" dur="2.8s" repeatCount="indefinite" />
+                            <animate attributeName="opacity" values="0.5;0.1;0.5" dur="2.8s" repeatCount="indefinite" />
+                        </circle>
+                    </g>
+                    {% endif %}
+                </svg>
+                <div class="unitank-label">
+                    <div class="unitank-name">{{ tank.name }}</div>
+                    <div class="unitank-capacity">{{ tank.capacity }}L</div>
+                    {% if tank.batch_id %}
+                    <div class="unitank-beer">{{ tank.product_name or 'Unknown' }}</div>
+                    <div class="unitank-info">#{{ tank.batch_id }} · {{ tank.batch_status }}</div>
+                    {% else %}
+                    <div class="unitank-status">
+                        {% if tank.status == 'clean' %}
+                        <span class="text-success"><i class="fas fa-check-circle"></i> Clean</span>
+                        {% elif tank.status == 'dirty' %}
+                        <span class="text-danger"><i class="fas fa-exclamation-circle"></i> Dirty</span>
+                        {% else %}
+                        <span class="text-secondary"><i class="fas fa-circle"></i> {{ tank.status }}</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="mt-5 mb-3 text-center">
+            <a href="/equipment/tanks" class="btn btn-outline-primary btn-sm">View All Tanks</a>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-chart-line me-2"></i>Revenue & Expenses (Last 6 Months)</div>
+            <div class="card-body">
+                <canvas id="revenueChart" height="100" data-revenue="{{ data.monthly_revenue or 0 }}"
+                    data-expenses="{{ data.monthly_expenses or 0 }}"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-chart-pie me-2"></i>Production Status</div>
+            <div class="card-body">
+                <canvas id="productionChart" height="200" data-planned="{{ data.planned_batches or 0 }}"
+                    data-brewing="{{ data.brewing_batches or 0 }}" data-fermenting="{{ data.fermenting_batches or 0 }}"
+                    data-completed="{{ data.completed_batches or 0 }}">
+                </canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-plus me-2"></i>Quick Actions</div>
+            <div class="card-body">
+                <a href="/sales/add" class="btn btn-primary me-2 mb-2"><i class="fas fa-shopping-cart"></i> New
+                    Order</a>
+                <a href="/production/add" class="btn btn-primary me-2 mb-2"><i class="fas fa-flask"></i> New Batch</a>
+                <a href="/inventory/add" class="btn btn-primary me-2 mb-2"><i class="fas fa-box"></i> Add Material</a>
+                <a href="/customers/add" class="btn btn-primary me-2 mb-2"><i class="fas fa-user-plus"></i> Add
+                    Customer</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-link me-2"></i>Quick Links</div>
+            <div class="card-body">
+                <a href="/production?status=brewing" class="btn btn-outline-secondary me-2 mb-2">Active Brews</a>
+                <a href="/sales?status=pending" class="btn btn-outline-secondary me-2 mb-2">Pending Orders</a>
+                <a href="/quality" class="btn btn-outline-secondary me-2 mb-2">Quality Records</a>
+                <a href="/finance" class="btn btn-outline-secondary me-2 mb-2">Finance</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* SVG Unitank Styles */
+    .unitank-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex: 0 0 auto;
+        margin: 10px;
+    }
+
+    .unitank-wrapper.tank-large .unitank-svg {
+        width: 110px;
+        height: 165px;
+    }
+
+    .unitank-wrapper.tank-medium .unitank-svg {
+        width: 90px;
+        height: 135px;
+    }
+
+    .unitank-wrapper.tank-small .unitank-svg {
+        width: 70px;
+        height: 105px;
+    }
+
+    .unitank-svg {
+        display: block;
+        flex-shrink: 0;
+    }
+
+    /* Label below tank */
+    .unitank-label {
+        margin-top: 8px;
+        text-align: center;
+        width: 100%;
+    }
+
+    .unitank-name {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #212529;
+    }
+
+    .unitank-capacity {
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+
+    .unitank-beer {
+        font-weight: 500;
+        font-size: 0.8rem;
+        color: #0d6efd;
+        margin-top: 3px;
+    }
+
+    .unitank-info {
+        font-size: 0.7rem;
+        color: #6c757d;
+    }
+
+    .unitank-status {
+        font-size: 0.75rem;
+        margin-top: 3px;
+    }
+
+    .unitank-status .text-success {
+        color: #198754 !important;
+    }
+
+    .unitank-status .text-danger {
+        color: #dc3545 !important;
+    }
+
+    .unitank-status .text-secondary {
+        color: #6c757d !important;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Format currency
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('vi-VN').format(value);
+    }
+
+    // ==================== NOTIFICATION SYSTEM ====================
+    const NotificationManager = {
+        soundEnabled: true,
+        desktopEnabled: false,
+        audioContext: null,
+
+        init: function () {
+            // Request desktop notification permission
+            if ('Notification' in window) {
+                if (Notification.permission === 'default') {
+                    // Will request on first interaction
+                    document.addEventListener('click', () => this.requestDesktopPermission(), { once: true });
+                } else if (Notification.permission === 'granted') {
+                    this.desktopEnabled = true;
+                }
+            }
+
+            // Initialize audio context for sound alerts
+            try {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.log('Audio context not available');
+            }
+        },
+
+        requestDesktopPermission: async function () {
+            if ('Notification' in window && Notification.permission === 'default') {
+                const permission = await Notification.requestPermission();
+                this.desktopEnabled = permission === 'granted';
+                if (this.desktopEnabled) {
+                    this.showDesktopNotification('Notifications Enabled', 'You will receive desktop alerts for important updates', 'success');
+                }
+            }
+        },
+
+        playSound: function (type = 'info') {
+            if (!this.soundEnabled || !this.audioContext) return;
+
+            try {
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+
+                // Different sounds for different alert types
+                if (type === 'alert' || type === 'warning') {
+                    oscillator.frequency.setValueAtTime(880, this.audioContext.currentTime); // A5
+                    oscillator.frequency.setValueAtTime(659.25, this.audioContext.currentTime + 0.1); // E5
+                    oscillator.frequency.setValueAtTime(880, this.audioContext.currentTime + 0.2); // A5
+                } else if (type === 'success') {
+                    oscillator.frequency.setValueAtTime(523.25, this.audioContext.currentTime); // C5
+                    oscillator.frequency.setValueAtTime(659.25, this.audioContext.currentTime + 0.1); // E5
+                    oscillator.frequency.setValueAtTime(783.99, this.audioContext.currentTime + 0.2); // G5
+                } else {
+                    oscillator.frequency.setValueAtTime(440, this.audioContext.currentTime); // A4
+                }
+
+                oscillator.type = 'sine';
+                gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
+
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + 0.3);
+            } catch (e) {
+                console.log('Sound playback failed:', e);
+            }
+        },
+
+        showDesktopNotification: function (title, body, type = 'info') {
+            if (!this.desktopEnabled) return;
+
+            try {
+                const notification = new Notification(title, {
+                    body: body,
+                    icon: '/static/favicon.ico',
+                    badge: '/static/favicon.ico',
+                    tag: 'brewery-' + Date.now(),
+                    requireInteraction: type === 'alert' || type === 'warning'
+                });
+
+                notification.onclick = function () {
+                    window.focus();
+                    notification.close();
+                };
+
+                setTimeout(() => notification.close(), 5000);
+            } catch (e) {
+                console.log('Desktop notification failed:', e);
+            }
+        },
+
+        notify: function (message, type = 'info', options = {}) {
+            // Play sound
+            this.playSound(type);
+
+            // Show desktop notification for important alerts
+            if (type === 'alert' || type === 'warning' || options.desktop) {
+                this.showDesktopNotification(
+                    options.title || 'Brewery Manager',
+                    message,
+                    type
+                );
+            }
+        }
+    };
+
+    // ==================== REAL-TIME CHARTS ====================
+    let revenueChart;
+    let productionChart;
+    let chartUpdateInterval;
+
+    function initCharts() {
+        // Revenue Chart with animation
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        const revenueChartCanvas = document.getElementById('revenueChart');
+        const currentRevenue = parseFloat(revenueChartCanvas.dataset.revenue) || 0;
+        const currentExpenses = parseFloat(revenueChartCanvas.dataset.expenses) || 0;
+        revenueChart = new Chart(revenueCtx, {
+            type: 'bar',
+            data: {
+                labels: ['This Month'],
+                datasets: [{
+                    label: 'Revenue',
+                    data: [currentRevenue],
+                    backgroundColor: 'rgba(40, 167, 69, 0.8)',
+                    borderColor: '#28a745',
+                    borderWidth: 2
+                }, {
+                    label: 'Expenses',
+                    data: [currentExpenses],
+                    backgroundColor: 'rgba(220, 53, 69, 0.8)',
+                    borderColor: '#dc3545',
+                    borderWidth: 2
+                }, {
+                    label: 'Profit',
+                    data: [currentRevenue - currentExpenses],
+                    backgroundColor: 'rgba(23, 162, 184, 0.8)',
+                    borderColor: '#17a2b8',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                animation: {
+                    duration: 750,
+                    easing: 'easeInOutQuart'
+                },
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return context.dataset.label + ': ' + formatCurrency(context.raw) + ' VND';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: value => (value / 1000000) + 'M'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Production Status Chart with animation
+        const productionCtx = document.getElementById('productionChart').getContext('2d');
+        const chartCanvas = document.getElementById('productionChart');
+        const plannedBatches = parseInt(chartCanvas.dataset.planned) || 0;
+        const brewingBatches = parseInt(chartCanvas.dataset.brewing) || 0;
+        const fermentingBatches = parseInt(chartCanvas.dataset.fermenting) || 0;
+        const completedBatches = parseInt(chartCanvas.dataset.completed) || 0;
+        productionChart = new Chart(productionCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Planned', 'Brewing', 'Fermenting', 'Completed'],
+                datasets: [{
+                    data: [plannedBatches, brewingBatches, fermentingBatches, completedBatches],
+                    backgroundColor: ['#17a2b8', '#fd7e14', '#6f42c1', '#28a745'],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                animation: {
+                    animateRotate: true,
+                    animateScale: true
+                },
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    }
+
+    function updateCharts(data) {
+        // Update production chart with animation
+        if (productionChart && data) {
+            const newData = [
+                data.planned_batches || 0,
+                data.brewing_batches || 0,
+                data.fermenting_batches || 0,
+                data.completed_batches || 0
+            ];
+
+            // Only update if data changed
+            const currentData = productionChart.data.datasets[0].data;
+            if (JSON.stringify(newData) !== JSON.stringify(currentData)) {
+                productionChart.data.datasets[0].data = newData;
+                productionChart.update('active');
+            }
+        }
+    }
+
+    // ==================== LIVE DASHBOARD UPDATES ====================
+    let updateInterval;
+    const UPDATE_INTERVAL_MS = 15000; // Update every 15 seconds
+
+    function updateDashboard() {
+        fetch('/api/dashboard/live')
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    const data = result.data;
+
+                    // Update financial cards
+                    updateCard('monthly_revenue', formatCurrency(data.monthly_revenue) + ' VND');
+                    updateCard('monthly_expenses', formatCurrency(data.monthly_expenses) + ' VND');
+                    updateCard('monthly_profit', formatCurrency(data.monthly_profit) + ' VND');
+                    updateCard('pending_orders', data.pending_orders);
+                    updateCard('active_batches', data.active_batches);
+                    updateCard('total_customers', data.total_customers);
+                    updateCard('total_products', data.total_products);
+                    updateCard('total_staff', data.total_staff);
+
+                    // Update production chart
+                    if (productionChart) {
+                        productionChart.data.datasets[0].data = [
+                            data.planned_batches || 0,
+                            data.brewing_batches || 0,
+                            data.fermenting_batches || 0,
+                            data.completed_batches || 0
+                        ];
+                        productionChart.update();
+                    }
+
+                    // Update low stock alerts
+                    updateLowStockAlerts(data.low_stock);
+
+                    // Update expiring materials
+                    updateExpiringMaterials(data.expiring);
+
+                    // Update tank status
+                    updateTankStatus(data.tanks);
+
+                    // Update timestamp
+                    document.getElementById('last-update').textContent =
+                        new Date().toLocaleTimeString('vi-VN');
+
+                    // Flash the live indicator
+                    const indicator = document.getElementById('live-indicator');
+                    indicator.classList.remove('bg-success');
+                    indicator.classList.add('bg-info');
+                    setTimeout(() => {
+                        indicator.classList.remove('bg-info');
+                        indicator.classList.add('bg-success');
+                    }, 500);
+                }
+            })
+            .catch(error => {
+                console.error('Dashboard update failed:', error);
+                document.getElementById('live-indicator').classList.remove('bg-success');
+                document.getElementById('live-indicator').classList.add('bg-danger');
+            });
+    }
+
+    function updateCard(key, value) {
+        // Find card by looking for the key in card titles
+        const cards = document.querySelectorAll('.card-body h6');
+        cards.forEach(title => {
+            const titleText = title.textContent.toLowerCase();
+            const searchKey = key.replace('_', ' ').toLowerCase();
+            if (titleText.includes(searchKey)) {
+                const valueEl = title.nextElementSibling;
+                if (valueEl && valueEl.tagName === 'H2') {
+                    valueEl.textContent = value;
+                    // Add flash effect
+                    valueEl.style.transition = 'background-color 0.3s';
+                    valueEl.style.backgroundColor = 'rgba(255,255,255,0.3)';
+                    setTimeout(() => {
+                        valueEl.style.backgroundColor = 'transparent';
+                    }, 300);
+                }
+            }
+        });
+    }
+
+    function updateLowStockAlerts(lowStock) {
+        const container = document.querySelector('.card-header.bg-danger');
+        if (!container) return;
+
+        const card = container.closest('.card');
+        if (!lowStock || lowStock.length === 0) {
+            card.style.display = 'none';
+            return;
+        }
+
+        card.style.display = 'block';
+        const tbody = card.querySelector('tbody');
+        if (tbody) {
+            tbody.innerHTML = lowStock.map(item => `
+                <tr>
+                    <td>${item.name}</td>
+                    <td>${item.quantity} ${item.unit}</td>
+                    <td>${item.min_quantity} ${item.unit}</td>
+                    <td class="text-danger">${item.shortage} ${item.unit}</td>
+                    <td><a href="/inventory" class="btn btn-sm btn-warning">Restock</a></td>
+                </tr>
+            `).join('');
+        }
+    }
+
+    function updateExpiringMaterials(expiring) {
+        const container = document.querySelector('.card-header.bg-warning');
+        if (!container) return;
+
+        const card = container.closest('.card');
+        if (!expiring || expiring.length === 0) {
+            card.style.display = 'none';
+            return;
+        }
+
+        card.style.display = 'block';
+        const tbody = card.querySelector('tbody');
+        if (tbody) {
+            tbody.innerHTML = expiring.map(item => `
+                <tr>
+                    <td>${item.name}</td>
+                    <td>${item.expiry_date}</td>
+                    <td>${Math.floor(item.days_remaining)} days</td>
+                    <td>${item.quantity} ${item.unit}</td>
+                </tr>
+            `).join('');
+        }
+    }
+
+    function updateTankStatus(tanks) {
+        const container = document.querySelector('.d-flex.flex-wrap.justify-content-center.gap-3');
+        if (!container || !tanks) return;
+
+        container.innerHTML = tanks.map(tank => {
+            const sizeClass = tank.capacity >= 2000 ? 'tank-large' :
+                tank.capacity >= 800 ? 'tank-medium' : 'tank-small';
+            const statusClass = tank.batch_id ? 'tank-full' : 'tank-empty';
+
+            let statusContent = '';
+            if (tank.batch_id) {
+                statusContent = `
+                    <div class="tank-status">
+                        <div class="tank-beer-name">${tank.product_name || 'Unknown'}</div>
+                        <div class="tank-info">Batch #${tank.batch_id}</div>
+                        <div class="tank-info">${tank.batch_status || ''}</div>
+                        ${tank.start_date ? `<div class="tank-info">Started: ${tank.start_date}</div>` : ''}
+                    </div>
+                `;
+            } else {
+                let statusIcon = '';
+                if (tank.status === 'clean') {
+                    statusIcon = '<span class="text-success"><i class="fas fa-check-circle"></i> Clean</span>';
+                } else if (tank.status === 'dirty') {
+                    statusIcon = '<span class="text-danger"><i class="fas fa-exclamation-circle"></i> Dirty</span>';
+                } else {
+                    statusIcon = `<span class="text-secondary"><i class="fas fa-question-circle"></i> ${tank.status}</span>`;
+                }
+                statusContent = `
+                    <div class="tank-status">
+                        <div class="tank-empty-label">${statusIcon}</div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="tank-container ${sizeClass} ${statusClass}">
+                    <div class="tank-header">${tank.name} (${tank.capacity}L)</div>
+                    <div class="tank-body">${statusContent}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Initialize charts - DOM is already ready since script runs at end of page
+    initCharts();
+
+    // Start live updates
+    updateInterval = setInterval(updateDashboard, UPDATE_INTERVAL_MS);
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+        if (updateInterval) {
+            clearInterval(updateInterval);
+        }
+    });
+</script>
+
+<style>
+    @keyframes blink {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.3;
+        }
+    }
+
+    .blink {
+        animation: blink 1.5s infinite;
+    }
+</style>
+{% endblock %}

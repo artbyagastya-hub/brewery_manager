@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('batch_cogs', default='Batch COGS') }} - {{ batch.batch_number }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>{{ t('batch_cogs', default='Batch COGS') }}: {{ batch.batch_number }}</h2>
+        <div>
+            <form method="POST" action="{{ url_for('calculate_batch_cogs', batch_id=batch.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-outline-success">
+                    <i class="fas fa-calculator"></i> {{ t('auto_calculate', default='Auto-Calculate') }}
+                </button>
+            </form>
+            <a href="{{ url_for('production') }}" class="btn btn-outline-secondary ms-2">
+                <i class="fas fa-arrow-left"></i> {{ t('back', default='Back') }}
+            </a>
+        </div>
+    </div>
+
+    <!-- Batch Info -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>{{ t('product', default='Product') }}:</strong> {{ batch.product_name }}
+                </div>
+                <div class="col-md-3">
+                    <strong>{{ t('planned_quantity', default='Planned') }}:</strong> {{ batch.planned_quantity }} L
+                </div>
+                <div class="col-md-3">
+                    <strong>{{ t('actual_quantity', default='Actual') }}:</strong> {{ batch.actual_quantity or '-' }} L
+                </div>
+                <div class="col-md-3">
+                    <strong>{{ t('status', default='Status') }}:</strong>
+                    <span class="badge bg-{{ 'success' if batch.status == 'completed' else 'warning' }}">
+                        {{ batch.status }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- COGS Summary -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{{ t('cogs_summary', default='COGS Summary') }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if cogs_summary.totals %}
+                    <table class="table table-borderless">
+                        <tr>
+                            <th>{{ t('planned_cost', default='Planned Cost') }}:</th>
+                            <td class="text-end">{{ cogs_summary.totals.total_planned or 0 | currency }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('actual_cost', default='Actual Cost') }}:</th>
+                            <td class="text-end">{{ cogs_summary.totals.total_actual or 0 | currency }}</td>
+                        </tr>
+                        <tr
+                            class="table-{{ 'success' if (cogs_summary.totals.total_variance or 0) <= 0 else 'danger' }}">
+                            <th>{{ t('variance', default='Variance') }}:</th>
+                            <td class="text-end">
+                                {% set variance = cogs_summary.totals.total_variance or 0 %}
+                                {{ '+' if variance > 0 else '' }}{{ variance | currency }}
+                            </td>
+                        </tr>
+                    </table>
+
+                    <hr>
+
+                    <h6>{{ t('by_category', default='By Category') }}:</h6>
+                    {% for cat in cogs_summary.categories %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>{{ t(cat.category, default=cat.category) }}:</span>
+                        <span>{{ cat.actual_total or 0 | currency }}</span>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <p class="text-muted">{{ t('no_cogs_data', default='No COGS data yet') }}</p>
+                    {% endif %}
+
+                    {% if batch.actual_quantity and batch.actual_quantity > 0 and cogs_summary.totals %}
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <strong>{{ t('cost_per_liter', default='Cost/Liter') }}:</strong>
+                        <strong>{{ (cogs_summary.totals.total_actual / batch.actual_quantity) | currency }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- COGS Items -->
+        <div class="col-md-8 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ t('cogs_items', default='COGS Items') }}</h5>
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                        data-bs-target="#addCogsModal">
+                        <i class="fas fa-plus"></i> {{ t('add_item', default='Add Item') }}
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{{ t('category', default='Category') }}</th>
+                                    <th>{{ t('item', default='Item') }}</th>
+                                    <th class="text-end">{{ t('planned', default='Planned') }}</th>
+                                    <th class="text-end">{{ t('actual', default='Actual') }}</th>
+                                    <th class="text-end">{{ t('variance', default='Variance') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in cogs_items %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ t(item.category, default=item.category)
+                                            }}</span>
+                                    </td>
+                                    <td>{{ item.item_name }}</td>
+                                    <td class="text-end">{{ item.planned_cost | currency }}</td>
+                                    <td class="text-end">{{ item.actual_cost | currency }}</td>
+                                    <td class="text-end text-{{ 'success' if item.variance <= 0 else 'danger' }}">
+                                        {{ '+' if item.variance > 0 else '' }}{{ item.variance | currency }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% if not cogs_items %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">
+                                        {{ t('no_cogs_items', default='No COGS items yet. Click "Auto-Calculate" or add
+                                        items manually.') }}
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add COGS Item Modal -->
+<div class="modal fade" id="addCogsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('add_batch_cogs', batch_id=batch.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ t('add_cogs_item', default='Add COGS Item') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">{{ t('category', default='Category') }} *</label>
+                        <select name="category" class="form-select" required>
+                            <option value="ingredients">{{ t('ingredients', default='Ingredients') }}</option>
+                            <option value="packaging">{{ t('packaging', default='Packaging') }}</option>
+                            <option value="labor">{{ t('labor', default='Labor') }}</option>
+                            <option value="utilities">{{ t('utilities', default='Utilities') }}</option>
+                            <option value="other">{{ t('other', default='Other') }}</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ t('item_name', default='Item Name') }} *</label>
+                        <input type="text" name="item_name" class="form-control" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ t('planned_cost', default='Planned Cost') }}</label>
+                            <input type="number" step="0.01" name="planned_cost" class="form-control" value="0">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ t('actual_cost', default='Actual Cost') }}</label>
+                            <input type="number" step="0.01" name="actual_cost" class="form-control" value="0">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ t('notes', default='Notes') }}</label>
+                        <textarea name="notes" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('cancel',
+                        default='Cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ t('add', default='Add') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

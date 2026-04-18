@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Maintenance Schedule - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>🔧 Maintenance Schedule</h2>
+    <a href="{{ url_for('equipment') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Equipment
+    </a>
+</div>
+
+<!-- Overdue Maintenance Alert -->
+{% if overdue %}
+<div class="alert alert-danger mb-4">
+    <h5><i class="bi bi-exclamation-triangle"></i> Overdue Maintenance ({{ overdue|length }})</h5>
+    <div class="row">
+        {% for item in overdue %}
+        <div class="col-md-4 mb-2">
+            <div class="card border-danger">
+                <div class="card-body py-2">
+                    <strong>{{ item.equipment_name }}</strong><br>
+                    <small>{{ item.task_name }}</small><br>
+                    <span class="text-danger">Due: {{ item.next_due.strftime('%Y-%m-%d') }}</span>
+                    <form method="POST" action="{{ url_for('complete_maintenance_route', maintenance_id=item.id) }}"
+                        class="mt-2">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="text" name="notes" class="form-control form-control-sm mb-1"
+                            placeholder="Notes (optional)">
+                        <button type="submit" class="btn btn-success btn-sm w-100">✓ Complete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Filter -->
+<div class="mb-3">
+    <div class="btn-group">
+        <a href="{{ url_for('maintenance') }}"
+            class="btn btn-outline-secondary {% if not status %}active{% endif %}">All</a>
+        <a href="{{ url_for('maintenance', status='scheduled') }}"
+            class="btn btn-outline-secondary {% if status == 'scheduled' %}active{% endif %}">Scheduled</a>
+        <a href="{{ url_for('maintenance', status='completed') }}"
+            class="btn btn-outline-secondary {% if status == 'completed' %}active{% endif %}">Completed</a>
+    </div>
+</div>
+
+<!-- Maintenance Schedule Table -->
+<div class="card">
+    <div class="card-body">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Equipment</th>
+                    <th>Task</th>
+                    <th>Type</th>
+                    <th>Frequency</th>
+                    <th>Next Due</th>
+                    <th>Assigned To</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in schedule %}
+                <tr class="{% if item.next_due < now and item.status != 'completed' %}table-danger{% endif %}">
+                    <td><strong>{{ item.equipment_name }}</strong></td>
+                    <td>{{ item.task_name }}</td>
+                    <td><span class="badge bg-secondary">{{ item.task_type }}</span></td>
+                    <td>Every {{ item.frequency_days }} days</td>
+                    <td>{{ item.next_due.strftime('%Y-%m-%d') if item.next_due else 'N/A' }}</td>
+                    <td>{{ item.assigned_to_name or 'Unassigned' }}</td>
+                    <td>
+                        <span
+                            class="badge {% if item.status == 'completed' %}bg-success{% else %}bg-warning{% endif %}">
+                            {{ item.status }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if item.status != 'completed' %}
+                        <form method="POST" action="{{ url_for('complete_maintenance_route', maintenance_id=item.id) }}"
+                            class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="notes" value="">
+                            <button type="submit" class="btn btn-success btn-sm">✓ Complete</button>
+                        </form>
+                        {% else %}
+                        {% if item.last_completed %}
+                        <small class="text-muted">Last: {{ item.last_completed.strftime('%Y-%m-%d') if
+                            item.last_completed else 'N/A' }}</small>
+                        {% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Equipment Summary -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Fermenters</h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-1">CIP Clean: Every 7 days</p>
+                <p class="mb-1">Gasket Inspection: Every 30 days</p>
+                <p class="mb-0">Manual Clean (Pilot): Every 7 days</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Other Equipment</h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-1">Brewhouse Clean: Every 3 days</p>
+                <p class="mb-1">Lime Juicer Clean: Daily</p>
+                <p class="mb-1">Canning Line Flush: Daily</p>
+                <p class="mb-1">Glycol Check: Every 7 days</p>
+                <p class="mb-1">Keg Washer Clean: Every 3 days</p>
+                <p class="mb-0">Water Filter Flush: Every 7 days</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

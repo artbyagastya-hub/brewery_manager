@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('add_yeast_strain', default='Add Yeast Strain') }} - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">🧫 {{ t('add_yeast_strain', default='Add Yeast Strain') }}</h1>
+        <a href="{{ url_for('yeast_strains') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> {{ t('back', default='Back') }}
+        </a>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('name', default='Name') }} *</label>
+                            <input type="text" name="name" class="form-control" required
+                                placeholder="e.g., Safale US-05">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('lab', default='Lab') }}</label>
+                            <input type="text" name="lab" class="form-control"
+                                placeholder="e.g., Fermentis, White Labs">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('product_id', default='Product ID') }}</label>
+                            <input type="text" name="product_id" class="form-control" placeholder="e.g., WLP001">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('yeast_type', default='Type') }}</label>
+                            <select name="yeast_type" class="form-select">
+                                <option value="ale">Ale</option>
+                                <option value="lager">Lager</option>
+                                <option value="wheat">Wheat</option>
+                                <option value="belgian">Belgian</option>
+                                <option value="wild">Wild</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('form', default='Form') }}</label>
+                            <select name="form" class="form-select">
+                                <option value="liquid">Liquid</option>
+                                <option value="dry">Dry</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('attenuation_min', default='Attenuation Min (%)') }}</label>
+                            <input type="number" name="attenuation_min" class="form-control" value="70" step="0.1">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('attenuation_max', default='Attenuation Max (%)') }}</label>
+                            <input type="number" name="attenuation_max" class="form-control" value="80" step="0.1">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('min_temp', default='Min Temp (°C)') }}</label>
+                            <input type="number" name="min_temp" class="form-control" value="18" step="0.1">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('max_temp', default='Max Temp (°C)') }}</label>
+                            <input type="number" name="max_temp" class="form-control" value="22" step="0.1">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('flocculation', default='Flocculation') }}</label>
+                            <select name="flocculation" class="form-select">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('alcohol_tolerance', default='Alcohol Tolerance (%)')
+                                }}</label>
+                            <input type="number" name="alcohol_tolerance" class="form-control" value="10" step="0.1">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">{{ t('description', default='Description') }}</label>
+                    <textarea name="description" class="form-control" rows="3"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">{{ t('notes', default='Notes') }}</label>
+                    <textarea name="notes" class="form-control" rows="2"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> {{ t('save', default='Save') }}
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

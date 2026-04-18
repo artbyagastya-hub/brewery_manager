@@ -1,0 +1,410 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('reports.analytics_dashboard', 'Analytics Dashboard') }} - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-chart-line me-2"></i>{{ t('reports.analytics_dashboard', 'Analytics Dashboard') }}</h2>
+        <div class="btn-group">
+            <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="fas fa-calendar me-1"></i>{{ t('reports.period', 'Period') }}: {{ period_label }}
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="?period=7">{{ t('reports.last_7_days', 'Last 7 Days') }}</a></li>
+                <li><a class="dropdown-item" href="?period=30">{{ t('reports.last_30_days', 'Last 30 Days') }}</a></li>
+                <li><a class="dropdown-item" href="?period=90">{{ t('reports.last_90_days', 'Last 90 Days') }}</a></li>
+                <li><a class="dropdown-item" href="?period=365">{{ t('reports.last_year', 'Last Year') }}</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Executive Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">{{ t('reports.revenue', 'Revenue') }}</h6>
+                            <h3>{{ executive.revenue|currency }}</h3>
+                            <small>{{ executive.orders.count }} {{ t('reports.orders', 'orders') }}</small>
+                        </div>
+                        <i class="fas fa-dollar-sign fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">{{ t('reports.expenses', 'Expenses') }}</h6>
+                            <h3>{{ executive.expenses|currency }}</h3>
+                            <small>{{ t('reports.costs', 'Costs') }}</small>
+                        </div>
+                        <i class="fas fa-credit-card fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card {% if executive.profit >= 0 %}bg-success{% else %}bg-warning{% endif %} text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">{{ t('reports.profit', 'Profit') }}</h6>
+                            <h3>{{ executive.profit|currency }}</h3>
+                            <small>{{ executive.margin|round(1) }}% {{ t('reports.margin', 'margin') }}</small>
+                        </div>
+                        <i class="fas fa-chart-line fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">{{ t('reports.production', 'Production') }}</h6>
+                            <h3>{{ executive.production.batches }}</h3>
+                            <small>{{ executive.production.volume|round(0) }} L {{ t('reports.total', 'total')
+                                }}</small>
+                        </div>
+                        <i class="fas fa-industry fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ t('reports.revenue_trend', 'Revenue Trend') }}</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ t('reports.sales_by_product', 'Sales by Product') }}</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="productChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ t('reports.production_status', 'Production Status') }}</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="productionChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ t('reports.expense_breakdown', 'Expense Breakdown') }}</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="expenseChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tables Row -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ t('reports.top_products', 'Top Products') }}</h5>
+                    <a href="/reports/sales" class="btn btn-sm btn-outline-primary">{{ t('common.view_all', 'View All')
+                        }}</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{{ t('reports.product', 'Product') }}</th>
+                                    <th class="text-end">{{ t('reports.quantity', 'Qty') }}</th>
+                                    <th class="text-end">{{ t('reports.revenue', 'Revenue') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in sales.by_product[:5] %}
+                                <tr>
+                                    <td>{{ product.name }}</td>
+                                    <td class="text-end">{{ product.total_quantity }}</td>
+                                    <td class="text-end">{{ product.total_revenue|currency }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ t('reports.top_customers', 'Top Customers') }}</h5>
+                    <a href="/reports/customers" class="btn btn-sm btn-outline-primary">{{ t('common.view_all', 'View
+                        All') }}</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{{ t('reports.customer', 'Customer') }}</th>
+                                    <th class="text-end">{{ t('reports.orders', 'Orders') }}</th>
+                                    <th class="text-end">{{ t('reports.total_spent', 'Total') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for customer in customers.top_by_ltv[:5] %}
+                                <tr>
+                                    <td>{{ customer.name }}</td>
+                                    <td class="text-end">{{ customer.order_count }}</td>
+                                    <td class="text-end">{{ customer.total_spent|currency }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerts Row -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>{{ t('reports.low_stock', 'Low
+                        Stock') }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if inventory.low_stock %}
+                    <ul class="list-group list-group-flush">
+                        {% for item in inventory.low_stock[:5] %}
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>{{ item.name }}</span>
+                            <span class="badge bg-warning">{{ item.quantity }} {{ item.unit }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted mb-0">{{ t('reports.no_low_stock', 'No low stock items') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-clock me-2"></i>{{ t('reports.expiring_soon', 'Expiring Soon') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if inventory.expiring_soon %}
+                    <ul class="list-group list-group-flush">
+                        {% for item in inventory.expiring_soon[:5] %}
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>{{ item.name }}</span>
+                            <span class="badge bg-danger">{{ item.expiry_date }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted mb-0">{{ t('reports.no_expiring', 'No items expiring soon') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-info">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-check-circle me-2"></i>{{ t('reports.quality_rate', 'Quality Pass
+                        Rate') }}</h5>
+                </div>
+                <div class="card-body text-center">
+                    <h2
+                        class="{% if quality.pass_rate >= 95 %}text-success{% elif quality.pass_rate >= 80 %}text-warning{% else %}text-danger{% endif %}">
+                        {{ quality.pass_rate|round(1) }}%
+                    </h2>
+                    <p class="text-muted mb-0">
+                        {{ quality.passed }}/{{ quality.total_checks }} {{ t('reports.checks_passed', 'checks passed')
+                        }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ t('reports.detailed_reports', 'Detailed Reports') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2">
+                            <a href="/reports/sales" class="btn btn-outline-primary w-100 mb-2">
+                                <i class="fas fa-shopping-cart me-1"></i>{{ t('reports.sales', 'Sales') }}
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="/reports/production" class="btn btn-outline-primary w-100 mb-2">
+                                <i class="fas fa-industry me-1"></i>{{ t('reports.production', 'Production') }}
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="/reports/inventory" class="btn btn-outline-primary w-100 mb-2">
+                                <i class="fas fa-boxes me-1"></i>{{ t('reports.inventory', 'Inventory') }}
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="/reports/financial" class="btn btn-outline-primary w-100 mb-2">
+                                <i class="fas fa-dollar-sign me-1"></i>{{ t('reports.financial', 'Financial') }}
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="/reports/customers" class="btn btn-outline-primary w-100 mb-2">
+                                <i class="fas fa-users me-1"></i>{{ t('reports.customers', 'Customers') }}
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="/traceability/cogs-summary" class="btn btn-outline-primary w-100 mb-2">
+                                <i class="fas fa-chart-pie me-1"></i>{{ t('reports.cogs', 'COGS') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Revenue Trend Chart
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    const revenueLabels = {{ sales.daily_trend| map(attribute = 'date') | list | tojson }};
+    const revenueData = {{ sales.daily_trend| map(attribute = 'revenue') | list | tojson }};
+    new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: revenueLabels,
+            datasets: [{
+                label: '{{ t("reports.revenue", "Revenue") }}',
+                data: revenueData,
+                borderColor: '#36A2EB',
+                backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+
+    // Product Sales Chart
+    const productCtx = document.getElementById('productChart').getContext('2d');
+    const productLabels = {{ sales.by_product[:5]| map(attribute = 'name') | list | tojson }};
+    const productData = {{ sales.by_product[:5]| map(attribute = 'total_revenue') | list | tojson }};
+    new Chart(productCtx, {
+        type: 'doughnut',
+        data: {
+            labels: productLabels,
+            datasets: [{
+                data: productData,
+                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+
+    // Production Status Chart
+    const productionCtx = document.getElementById('productionChart').getContext('2d');
+    const productionLabels = {{ production.by_status| map(attribute = 'status') | list | tojson }};
+    const productionData = {{ production.by_status| map(attribute = 'count') | list | tojson }};
+    new Chart(productionCtx, {
+        type: 'bar',
+        data: {
+            labels: productionLabels,
+            datasets: [{
+                label: '{{ t("reports.batches", "Batches") }}',
+                data: productionData,
+                backgroundColor: ['#FFCE56', '#36A2EB', '#9966FF', '#4BC0C0']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+
+    // Expense Breakdown Chart
+    const expenseCtx = document.getElementById('expenseChart').getContext('2d');
+    const expenseLabels = {{ financial.expense_by_category| map(attribute = 'category') | list | tojson }};
+    const expenseData = {{ financial.expense_by_category| map(attribute = 'total') | list | tojson }};
+    new Chart(expenseCtx, {
+        type: 'pie',
+        data: {
+            labels: expenseLabels,
+            datasets: [{
+                data: expenseData,
+                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+</script>
+{% endblock %}
