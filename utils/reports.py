@@ -24,7 +24,7 @@ class BreweryReports:
         # Revenue
         revenue = self.db.execute_query("""
             SELECT COALESCE(SUM(total_amount), 0) as total
-            FROM orders
+            FROM sales_orders
             WHERE order_date BETWEEN ? AND ?
             AND status != 'cancelled'
         """, (start_date, end_date))
@@ -32,9 +32,9 @@ class BreweryReports:
         # Expenses
         expenses = self.db.execute_query("""
             SELECT COALESCE(SUM(amount), 0) as total
-            FROM transactions
+            FROM financial_transactions
             WHERE type = 'expense'
-            AND date BETWEEN ? AND ?
+            AND transaction_date BETWEEN ? AND ?
         """, (start_date, end_date))
 
         # Production
@@ -48,7 +48,7 @@ class BreweryReports:
         # Orders
         orders = self.db.execute_query("""
             SELECT COUNT(*) as count, COALESCE(SUM(total_amount), 0) as value
-            FROM orders
+            FROM sales_orders
             WHERE order_date BETWEEN ? AND ?
         """, (start_date, end_date))
 
@@ -87,7 +87,7 @@ class BreweryReports:
                    SUM(oi.quantity * oi.unit_price) as total_revenue
             FROM order_items oi
             JOIN products p ON oi.product_id = p.id
-            JOIN orders o ON oi.order_id = o.id
+            JOIN sales_orders o ON oi.order_id = o.id
             WHERE o.order_date >= ?
             AND o.status != 'cancelled'
             GROUP BY p.id
@@ -99,7 +99,7 @@ class BreweryReports:
             SELECT c.type,
                    COUNT(DISTINCT o.id) as order_count,
                    SUM(o.total_amount) as total_revenue
-            FROM orders o
+            FROM sales_orders o
             JOIN customers c ON o.customer_id = c.id
             WHERE o.order_date >= ?
             AND o.status != 'cancelled'
@@ -112,7 +112,7 @@ class BreweryReports:
             SELECT DATE(order_date) as date,
                    COUNT(*) as order_count,
                    SUM(total_amount) as revenue
-            FROM orders
+            FROM sales_orders
             WHERE order_date >= ?
             AND status != 'cancelled'
             GROUP BY DATE(order_date)
@@ -124,7 +124,7 @@ class BreweryReports:
             SELECT c.name, c.type,
                    COUNT(o.id) as order_count,
                    SUM(o.total_amount) as total_spent
-            FROM orders o
+            FROM sales_orders o
             JOIN customers c ON o.customer_id = c.id
             WHERE o.order_date >= ?
             AND o.status != 'cancelled'
@@ -202,8 +202,8 @@ class BreweryReports:
                 COUNT(*) as item_count,
                 SUM(quantity * cost_per_unit) as total_value,
                 SUM(CASE WHEN quantity <= min_quantity THEN 1 ELSE 0 END) as low_stock_count
-            FROM inventory
-            WHERE status = 'active'
+            FROM raw_materials
+            WHERE 1=1
         """)
 
         # Value by category
@@ -212,8 +212,8 @@ class BreweryReports:
                    COUNT(*) as item_count,
                    SUM(quantity) as total_quantity,
                    SUM(quantity * cost_per_unit) as total_value
-            FROM inventory
-            WHERE status = 'active'
+            FROM raw_materials
+            WHERE 1=1
             GROUP BY category
             ORDER BY total_value DESC
         """)
@@ -221,7 +221,7 @@ class BreweryReports:
         # Expiring soon (next 30 days)
         expiring = self.db.execute_query("""
             SELECT name, quantity, unit, expiry_date
-            FROM inventory
+            FROM raw_materials
             WHERE expiry_date IS NOT NULL
             AND expiry_date <= DATE('now', '+30 days')
             AND quantity > 0
@@ -231,9 +231,9 @@ class BreweryReports:
         # Low stock items
         low_stock = self.db.execute_query("""
             SELECT name, quantity, min_quantity, unit, category
-            FROM inventory
+            FROM raw_materials
             WHERE quantity <= min_quantity
-            AND status = 'active'
+            AND 1=1
             ORDER BY (quantity * 1.0 / NULLIF(min_quantity, 0))
         """)
 
@@ -251,9 +251,9 @@ class BreweryReports:
         # Income by category
         income_by_category = self.db.execute_query("""
             SELECT category, SUM(amount) as total
-            FROM transactions
+            FROM financial_transactions
             WHERE type = 'income'
-            AND date >= ?
+            AND transaction_date >= ?
             GROUP BY category
             ORDER BY total DESC
         """, (start_date,))
@@ -261,28 +261,28 @@ class BreweryReports:
         # Expenses by category
         expense_by_category = self.db.execute_query("""
             SELECT category, SUM(amount) as total
-            FROM transactions
+            FROM financial_transactions
             WHERE type = 'expense'
-            AND date >= ?
+            AND transaction_date >= ?
             GROUP BY category
             ORDER BY total DESC
         """, (start_date,))
 
         # Daily cash flow
         daily_flow = self.db.execute_query("""
-            SELECT DATE(date) as date,
+            SELECT DATE(transaction_date) as date,
                    SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as income,
                    SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as expense
-            FROM transactions
-            WHERE date >= ?
-            GROUP BY DATE(date)
+            FROM financial_transactions
+            WHERE transaction_date >= ?
+            GROUP BY DATE(transaction_date)
             ORDER BY date
         """, (start_date,))
 
         # Accounts receivable (unpaid orders)
         receivable = self.db.execute_query("""
-            SELECT SUM(total_amount - COALESCE(paid_amount, 0)) as total
-            FROM orders
+            SELECT SUM(total_amount) as total
+            FROM sales_orders
             WHERE payment_status IN ('unpaid', 'partial')
             AND status != 'cancelled'
         """)
@@ -304,7 +304,7 @@ class BreweryReports:
                 COUNT(*) as total,
                 SUM(CASE WHEN passed = 1 THEN 1 ELSE 0 END) as passed,
                 SUM(CASE WHEN passed = 0 THEN 1 ELSE 0 END) as failed
-            FROM quality_checks
+            FROM quality_records
             WHERE check_date >= ?
         """, (start_date,))
 
@@ -313,7 +313,7 @@ class BreweryReports:
             SELECT check_type,
                    COUNT(*) as total,
                    SUM(CASE WHEN passed = 1 THEN 1 ELSE 0 END) as passed
-            FROM quality_checks
+            FROM quality_records
             WHERE check_date >= ?
             GROUP BY check_type
         """, (start_date,))
@@ -321,7 +321,7 @@ class BreweryReports:
         # Failed checks detail
         failed_checks = self.db.execute_query("""
             SELECT qc.*, pb.batch_number, p.name as product_name
-            FROM quality_checks qc
+            FROM quality_records qc
             LEFT JOIN production_batches pb ON qc.batch_id = pb.id
             LEFT JOIN products p ON pb.product_id = p.id
             WHERE qc.passed = 0
@@ -350,7 +350,7 @@ class BreweryReports:
         segments = self.db.execute_query("""
             SELECT type, COUNT(*) as count
             FROM customers
-            WHERE status = 'active'
+            WHERE 1=1
             GROUP BY type
         """)
 
@@ -362,8 +362,8 @@ class BreweryReports:
                    MIN(o.order_date) as first_order,
                    MAX(o.order_date) as last_order
             FROM customers c
-            LEFT JOIN orders o ON c.id = o.customer_id
-            WHERE c.status = 'active'
+            LEFT JOIN sales_orders o ON c.id = o.customer_id
+            WHERE c.is_active = 1
             GROUP BY c.id
             HAVING order_count > 0
             ORDER BY total_spent DESC
@@ -380,7 +380,7 @@ class BreweryReports:
         # Customer retention (ordered in last 90 days)
         active_customers = self.db.execute_query("""
             SELECT COUNT(DISTINCT customer_id) as count
-            FROM orders
+            FROM sales_orders
             WHERE order_date >= ?
             AND status != 'cancelled'
         """, (start_date,))

@@ -21,6 +21,10 @@ backups/
 # Runtime data
 data/ai_memory.json
 
+# Virtual environment
+venv/
+.venv/
+
 # macOS
 .DS_Store
 

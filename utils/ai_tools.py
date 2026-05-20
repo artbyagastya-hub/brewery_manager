@@ -2891,7 +2891,7 @@ def _analyze_system_performance() -> Dict:
         }
         
         # 4. Data quality issues
-        cursor.execute("SELECT COUNT(*) as count FROM inventory WHERE quantity < 0")
+        cursor.execute("SELECT COUNT(*) as count FROM raw_materials WHERE quantity < 0")
         negative_inventory = cursor.fetchone()['count']
         
         cursor.execute("SELECT COUNT(*) as count FROM production_batches WHERE status = 'planned' AND start_date < date('now')")
@@ -2909,7 +2909,7 @@ def _analyze_system_performance() -> Dict:
             LEFT JOIN daily_tasks dt ON s.id = dt.assigned_to 
                 AND dt.status IN ('pending', 'in_progress')
                 AND dt.task_date = date('now')
-            WHERE s.status = 'active'
+            WHERE s.is_active = 1
             GROUP BY s.id
             ORDER BY task_count DESC
         """)
@@ -2941,7 +2941,7 @@ def _identify_improvement_opportunities() -> Dict:
                    CASE WHEN quantity < min_quantity THEN 'low' 
                         WHEN quantity > min_quantity * 3 THEN 'excess' 
                         ELSE 'normal' END as status
-            FROM inventory
+            FROM raw_materials
             WHERE quantity < min_quantity OR quantity > min_quantity * 3
         """)
         inventory_issues = [dict(row) for row in cursor.fetchall()]
@@ -2994,7 +2994,7 @@ def _identify_improvement_opportunities() -> Dict:
                 SUM(CASE WHEN status = 'available' THEN 1 ELSE 0 END) as available,
                 SUM(CASE WHEN status = 'in_use' THEN 1 ELSE 0 END) as in_use
             FROM equipment
-            WHERE type IN ('fermenter', 'tank', 'bright_tank')
+            WHERE equipment_type IN ('fermenter', 'tank', 'bright_tank')
         """)
         tank_stats = dict(cursor.fetchone())
         
@@ -3043,7 +3043,7 @@ def _identify_improvement_opportunities() -> Dict:
             SELECT c.name, c.id, MAX(so.order_date) as last_order
             FROM customers c
             LEFT JOIN sales_orders so ON c.id = so.customer_id
-            WHERE c.status = 'active'
+            WHERE c.is_active = 1
             GROUP BY c.id
             HAVING last_order < date('now', '-30 day') OR last_order IS NULL
         """)
@@ -3181,7 +3181,7 @@ def _generate_optimization_report() -> Dict:
                 SUM(CASE WHEN quantity < min_quantity THEN 1 ELSE 0 END) as low_stock,
                 SUM(CASE WHEN quantity = 0 THEN 1 ELSE 0 END) as out_of_stock,
                 SUM(quantity * cost_per_unit) as inventory_value
-            FROM inventory
+            FROM raw_materials
         """)
         inv_stats = dict(cursor.fetchone())
         
@@ -3211,7 +3211,7 @@ def _generate_optimization_report() -> Dict:
             FROM staff s
             LEFT JOIN daily_tasks dt ON s.id = dt.assigned_to
                 AND dt.task_date >= date('now', '-30 day')
-            WHERE s.status = 'active'
+            WHERE s.is_active = 1
         """)
         staff_stats = dict(cursor.fetchone())
         
@@ -3495,7 +3495,6 @@ def detect_anomalies() -> Dict:
             SELECT name, quantity, min_quantity, unit,
                    CASE WHEN min_quantity > 0 THEN ROUND(quantity * 100.0 / min_quantity, 1) ELSE 0 END as stock_pct
             FROM raw_materials
-            WHERE active = 1
             ORDER BY stock_pct ASC
             LIMIT 5
         """)
@@ -3515,7 +3514,7 @@ def detect_anomalies() -> Dict:
         cursor.execute("""
             SELECT b.id, p.name as product_name, b.status, b.start_date,
                    JULIANDAY('now') - JULIANDAY(b.start_date) as days_running
-            FROM batches b
+            FROM production_batches b
             JOIN products p ON b.product_id = p.id
             WHERE b.status IN ('fermenting', 'conditioning')
             AND JULIANDAY('now') - JULIANDAY(b.start_date) > 21
@@ -3532,33 +3531,39 @@ def detect_anomalies() -> Dict:
             })
         
         # Check for overdue maintenance
-        cursor.execute("""
-            SELECT name, type, status, next_maintenance
-            FROM equipment
-            WHERE next_maintenance IS NOT NULL
-            AND next_maintenance < DATE('now')
-            AND status != 'maintenance'
-        """)
-        overdue_maintenance = cursor.fetchall()
-        for eq in overdue_maintenance:
-            anomalies.append({
-                "type": "maintenance_overdue",
-                "severity": "high",
-                "item": eq['name'],
-                "message": f"Maintenance overdue (was due: {eq['next_maintenance']})",
-                "value": eq['next_maintenance'],
-                "threshold": datetime.now().strftime('%Y-%m-%d')
-            })
+        try:
+            cursor.execute("""
+                SELECT ms.task_name, e.name as equipment_name, ms.next_due
+                FROM maintenance_schedule ms
+                JOIN equipment e ON ms.equipment_id = e.id
+                WHERE ms.next_due < DATE('now')
+                AND ms.status != 'completed'
+            """)
+            overdue_maintenance = cursor.fetchall()
+            for eq in overdue_maintenance:
+                anomalies.append({
+                    "type": "maintenance_overdue",
+                    "severity": "high",
+                    "item": eq['equipment_name'],
+                    "message": f"Maintenance overdue: {eq['task_name']} (was due: {eq['next_due']})",
+                    "value": eq['next_due'],
+                    "threshold": datetime.now().strftime('%Y-%m-%d')
+                })
+        except Exception:
+            pass
         
         # Check for declining sales trend
-        cursor.execute("""
-            SELECT DATE(created_at) as sale_date, SUM(total_amount) as daily_total
-            FROM orders
-            WHERE created_at >= DATE('now', '-14 days')
-            GROUP BY DATE(created_at)
-            ORDER BY sale_date
-        """)
-        sales_data = cursor.fetchall()
+        try:
+            cursor.execute("""
+                SELECT DATE(order_date) as sale_date, SUM(total_amount) as daily_total
+                FROM sales_orders
+                WHERE order_date >= DATE('now', '-14 days')
+                GROUP BY DATE(order_date)
+                ORDER BY sale_date
+            """)
+            sales_data = cursor.fetchall()
+        except Exception:
+            sales_data = []
         if len(sales_data) >= 7:
             recent_avg = sum(s['daily_total'] for s in sales_data[-3:]) / 3
             older_avg = sum(s['daily_total'] for s in sales_data[:3]) / 3

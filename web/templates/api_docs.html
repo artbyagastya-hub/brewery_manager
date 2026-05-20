@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}API Documentation - Brewery Manager{% endblock %}
+{% block content %}
+<h2>REST API Documentation</h2>
+<div class="card mb-3"><div class="card-body">
+    <h5>Authentication</h5><p>Use API key in header: <code>Authorization: Bearer YOUR_API_KEY</code></p>
+    <h5>Endpoints</h5>
+    <table class="table table-sm">
+    <tr><td>GET</td><td>/api/v1/dashboard</td><td>Dashboard summary</td></tr>
+    <tr><td>GET</td><td>/api/v1/materials</td><td>List materials</td></tr>
+    <tr><td>GET</td><td>/api/v1/products</td><td>List products</td></tr>
+    <tr><td>GET</td><td>/api/v1/batches</td><td>List production batches</td></tr>
+    <tr><td>GET</td><td>/api/v1/customers</td><td>List customers</td></tr>
+    <tr><td>GET</td><td>/api/v1/orders</td><td>List sales orders</td></tr>
+    <tr><td>GET</td><td>/api/v1/recipes</td><td>List recipes</td></tr>
+    <tr><td>GET</td><td>/api/v1/equipment</td><td>List equipment</td></tr>
+    <tr><td>GET</td><td>/api/v1/staff</td><td>List staff</td></tr>
+    <tr><td>GET</td><td>/api/v1/finance/summary</td><td>Financial summary</td></tr>
+    </table>
+</div></div>
+{% endblock %}

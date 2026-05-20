@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Top Customers - Brewery Manager{% endblock %}
+{% block content %}
+<h2>Top Customers</h2>
+<div class="table-responsive">
+<table class="table table-striped">
+    <thead><tr><th>#</th><th>Customer</th><th>Type</th><th>Orders</th><th>Total Spent</th></tr></thead>
+    <tbody>
+    {% for c in customers %}
+    <tr><td>{{ loop.index }}</td><td>{{ c.name }}</td><td>{{ c.type }}</td><td>{{ c.order_count }}</td><td>{{ c.total_spent|currency }}</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

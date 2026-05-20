@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Production Report - Brewery Manager{% endblock %}
+{% block content %}
+<h2>Production Report</h2>
+{% if report %}
+<div class="row">
+    <div class="col-md-4"><div class="card"><div class="card-body text-center"><h3>{{ report.total_batches or 0 }}</h3><p>Total Batches</p></div></div></div>
+    <div class="col-md-4"><div class="card"><div class="card-body text-center"><h3>{{ report.completed_batches or 0 }}</h3><p>Completed</p></div></div></div>
+    <div class="col-md-4"><div class="card"><div class="card-body text-center"><h3>{{ report.total_quantity or 0 }}</h3><p>Total Volume</p></div></div></div>
+</div>
+{% else %}
+<p class="text-muted">No data available for the selected period.</p>
+{% endif %}
+{% endblock %}

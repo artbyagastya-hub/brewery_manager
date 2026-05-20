@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Yeast Inventory - Brewery Manager{% endblock %}
+{% block content %}
+<h2>Yeast Inventory</h2>
+<div class="table-responsive">
+<table class="table table-striped">
+    <thead><tr><th>Strain</th><th>Lot</th><th>Qty</th><th>Viability</th><th>Expiry</th></tr></thead>
+    <tbody>
+    {% for i in inventory %}<tr><td>{{ i.name or '' }}</td><td>{{ i.lot_number or '' }}</td><td>{{ i.quantity }} {{ i.unit }}</td><td>{{ i.viability }}%</td><td>{{ i.expiry_date or '' }}</td></tr>{% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

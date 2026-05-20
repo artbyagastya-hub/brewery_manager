@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Add Performance Metric - Brewery Manager{% endblock %}
+{% block content %}
+<h2>Add Performance Metric</h2>
+<form method="POST" class="card p-4">
+    <div class="mb-3"><label class="form-label">Date</label><input type="date" name="metric_date" class="form-control" required></div>
+    <div class="mb-3"><label class="form-label">Category</label><input type="text" name="category" class="form-control" required></div>
+    <div class="mb-3"><label class="form-label">Metric Name</label><input type="text" name="metric_name" class="form-control" required></div>
+    <div class="mb-3"><label class="form-label">Value</label><input type="number" step="any" name="value" class="form-control" required></div>
+    <div class="mb-3"><label class="form-label">Unit</label><input type="text" name="unit" class="form-control"></div>
+    <div class="mb-3"><label class="form-label">Target</label><input type="number" step="any" name="target" class="form-control"></div>
+    <button type="submit" class="btn btn-primary">Save</button>
+</form>
+{% endblock %}

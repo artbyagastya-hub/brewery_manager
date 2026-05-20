@@ -13,7 +13,7 @@ from typing import Dict
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session, g
 from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -45,9 +45,12 @@ app = Flask(__name__)
 
 # Security Configuration
 app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
-app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production'
+# Only set Secure flag if actually behind HTTPS
+is_https = os.environ.get('FLASK_FORCE_HTTPS', 'false').lower() == 'true'
+app.config['SESSION_COOKIE_SECURE'] = is_https
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'None' if os.environ.get('FLASK_ENV') == 'production' else 'Lax'
+# 'None' requires Secure=True; for HTTP use 'Lax'
+app.config['SESSION_COOKIE_SAMESITE'] = 'None' if is_https else 'Lax'
 app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 hours
 
 # Initialize CSRF protection
@@ -56,11 +59,12 @@ csrf = CSRFProtect(app)
 # Initialize HTTPS enforcement (Talisman)
 csp = {
     'default-src': "'self'",
-    'script-src': "'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+    'script-src': "'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.socket.io",
     'style-src': "'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com",
     'font-src': "'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com",
     'img-src': "'self' data: https:",
-    'connect-src': "'self' ws: wss:"
+    'connect-src': "'self' ws: wss: https://cdn.jsdelivr.net https://cdn.socket.io",
+    'map-src': "'self' https://cdn.jsdelivr.net"
 }
 
 talisman = Talisman(
@@ -308,6 +312,438 @@ def change_password():
 
     flash('Password updated successfully', 'success')
     return redirect(url_for('profile'))
+
+
+# ==================== PASSWORD RESET ====================
+
+@app.route('/forgot-password', methods=['GET', 'POST'])
+@csrf.exempt
+@limiter.limit("10 per minute")
+def forgot_password():
+    """Forgot password page"""
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        if not email:
+            flash('Please enter your email address', 'error')
+            return render_template('forgot_password.html')
+
+        from utils.user_manager import UserManager
+        um = UserManager(db)
+        success, result = um.generate_reset_token(email)
+
+        if success:
+            # In production, send email with reset link
+            # For now, show the token (dev only)
+            flash(f'Password reset link sent to {email}. (Dev: token={result})', 'success')
+        else:
+            flash(result, 'error')
+
+        return redirect(url_for('login'))
+
+    return render_template('forgot_password.html')
+
+
+@app.route('/reset-password/<token>', methods=['GET', 'POST'])
+@csrf.exempt
+def reset_password(token):
+    """Reset password with token"""
+    if request.method == 'POST':
+        password = request.form.get('password', '')
+        confirm = request.form.get('confirm_password', '')
+
+        if not password or not confirm:
+            flash('Please fill in all fields', 'error')
+            return render_template('reset_password.html', token=token)
+
+        if password != confirm:
+            flash('Passwords do not match', 'error')
+            return render_template('reset_password.html', token=token)
+
+        if len(password) < 8:
+            flash('Password must be at least 8 characters', 'error')
+            return render_template('reset_password.html', token=token)
+
+        from utils.user_manager import UserManager
+        um = UserManager(db)
+        success, msg = um.reset_password_with_token(token, password)
+
+        if success:
+            flash('Password reset successfully. Please login.', 'success')
+            return redirect(url_for('login'))
+        else:
+            flash(msg, 'error')
+            return render_template('reset_password.html', token=token)
+
+    return render_template('reset_password.html', token=token)
+
+
+# ==================== USER MANAGEMENT ====================
+
+@app.route('/users')
+@login_required
+def users():
+    """User management page (admin/manager only)"""
+    user_role = session.get('user_role', 'viewer')
+    if user_role not in ['admin', 'manager']:
+        flash('Access denied. Admin/Manager role required.', 'error')
+        return redirect(url_for('dashboard'))
+
+    from utils.user_manager import UserManager
+    um = UserManager(db)
+
+    role_filter = request.args.get('role')
+    team_filter = request.args.get('team_id')
+
+    users_list = um.get_users(
+        role=role_filter,
+        team_id=int(team_filter) if team_filter else None
+    )
+    teams = um.get_teams()
+    stats = um.get_user_stats()
+
+    return render_template('users.html',
+                         users=users_list,
+                         teams=teams,
+                         stats=stats,
+                         role_filter=role_filter,
+                         team_filter=team_filter)
+
+
+@app.route('/users/add', methods=['GET', 'POST'])
+@login_required
+def add_user():
+    """Add new user (admin only)"""
+    user_role = session.get('user_role', 'viewer')
+    if user_role != 'admin':
+        flash('Access denied. Admin role required.', 'error')
+        return redirect(url_for('dashboard'))
+
+    from utils.user_manager import UserManager
+    um = UserManager(db)
+
+    if request.method == 'POST':
+        data = {
+            'username': request.form.get('username', '').strip(),
+            'email': request.form.get('email', '').strip(),
+            'full_name': request.form.get('full_name', '').strip(),
+            'password': request.form.get('password') or None,
+            'role': request.form.get('role', 'viewer'),
+            'phone': request.form.get('phone'),
+            'department': request.form.get('department'),
+            'team_id': int(request.form['team_id']) if request.form.get('team_id') else None
+        }
+
+        if not data['username'] or not data['email']:
+            flash('Username and email are required', 'error')
+            return render_template('add_user.html', teams=um.get_teams())
+
+        user_id, result = um.create_user(data)
+        if user_id:
+            temp_password = result
+            flash(f'User created successfully!', 'success')
+            if temp_password:
+                flash(f'Temporary password: {temp_password}', 'warning')
+            return redirect(url_for('users'))
+        else:
+            flash(f'Error: {result}', 'error')
+            return render_template('add_user.html', teams=um.get_teams())
+
+    teams = um.get_teams()
+    return render_template('add_user.html', teams=teams)
+
+
+@app.route('/users/<int:user_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_user(user_id):
+    """Edit user (admin only)"""
+    user_role = session.get('user_role', 'viewer')
+    if user_role != 'admin':
+        flash('Access denied. Admin role required.', 'error')
+        return redirect(url_for('dashboard'))
+
+    from utils.user_manager import UserManager
+    um = UserManager(db)
+
+    user = um.get_user(user_id)
+    if not user:
+        flash('User not found', 'error')
+        return redirect(url_for('users'))
+
+    if request.method == 'POST':
+        data = {}
+        for key in ['username', 'email', 'full_name', 'role', 'phone', 'department']:
+            if request.form.get(key):
+                data[key] = request.form[key].strip()
+
+        if request.form.get('team_id'):
+            data['team_id'] = int(request.form['team_id'])
+        elif 'team_id' in request.form:
+            data['team_id'] = None
+
+        if request.form.get('is_active') is not None:
+            data['is_active'] = 1 if request.form.get('is_active') == '1' else 0
+
+        success, msg = um.update_user(user_id, data)
+        if success:
+            flash('User updated successfully', 'success')
+            return redirect(url_for('users'))
+        else:
+            flash(f'Error: {msg}', 'error')
+
+    teams = um.get_teams()
+    return render_template('edit_user.html', user=user, teams=teams)
+
+
+@app.route('/users/<int:user_id>/deactivate', methods=['POST'])
+@login_required
+def deactivate_user(user_id):
+    """Deactivate user (admin only)"""
+    user_role = session.get('user_role', 'viewer')
+    if user_role != 'admin':
+        flash('Access denied. Admin role required.', 'error')
+        return redirect(url_for('dashboard'))
+
+    # Prevent self-deactivation
+    if user_id == session.get('user_id'):
+        flash('Cannot deactivate your own account', 'error')
+        return redirect(url_for('users'))
+
+    from utils.user_manager import UserManager
+    um = UserManager(db)
+    success, msg = um.deactivate_user(user_id)
+    flash(msg, 'success' if success else 'error')
+    return redirect(url_for('users'))
+
+
+@app.route('/users/<int:user_id>/reset-password', methods=['POST'])
+@login_required
+def admin_reset_user_password(user_id):
+    """Admin reset user password"""
+    user_role = session.get('user_role', 'viewer')
+    if user_role != 'admin':
+        flash('Access denied. Admin role required.', 'error')
+        return redirect(url_for('dashboard'))
+
+    from utils.user_manager import UserManager
+    um = UserManager(db)
+    success, temp_password = um.admin_reset_password(user_id)
+    if success:
+        flash(f'Password reset. Temporary password: {temp_password}', 'warning')
+    else:
+        flash('Failed to reset password', 'error')
+    return redirect(url_for('edit_user', user_id=user_id))
+
+
+@app.route('/users/<int:user_id>/permissions', methods=['GET', 'POST'])
+@login_required
+def user_permissions(user_id):
+    """Manage user permissions (admin only)"""
+    user_role = session.get('user_role', 'viewer')
+    if user_role != 'admin':
+        flash('Access denied. Admin role required.', 'error')
+        return redirect(url_for('dashboard'))
+
+    from utils.user_manager import UserManager
+    um = UserManager(db)
+
+    user = um.get_user(user_id)
+    if not user:
+        flash('User not found', 'error')
+        return redirect(url_for('users'))
+
+    if request.method == 'POST':
+        # Get all permissions from DB
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, name FROM permissions")
+        all_perms = cursor.fetchall()
+        conn.close()
+
+        # Set each permission based on form
+        for perm in all_perms:
+            granted = request.form.get(f'perm_{perm["id"]}') == '1'
+            um.set_user_permission(user_id, perm['id'], granted)
+
+        flash('Permissions updated', 'success')
+        return redirect(url_for('users'))
+
+    # Get current permissions
+    current_perms = um.get_user_permissions(user_id)
+
+    # Get all available permissions
+    conn = db.get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM permissions ORDER BY module, name")
+    all_permissions = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+
+    return render_template('user_permissions.html',
+                         user=user,
+                         all_permissions=all_permissions,
+                         current_perms=current_perms)
+
+
+@app.route('/users/activity')
+@login_required
+def user_activity():
+    """View user activity log (admin/manager only)"""
+    user_role = session.get('user_role', 'viewer')
+    if user_role not in ['admin', 'manager']:
+        flash('Access denied. Admin/Manager role required.', 'error')
+        return redirect(url_for('dashboard'))
+
+    from utils.user_manager import UserManager
+    um = UserManager(db)
+
+    user_id_filter = request.args.get('user_id', type=int)
+    activity_type = request.args.get('activity_type')
+    limit = request.args.get('limit', 100, type=int)
+
+    activities = um.get_user_activity(
+        user_id=user_id_filter,
+        activity_type=activity_type,
+        limit=limit
+    )
+    users_list = um.get_users()
+
+    return render_template('user_activity.html',
+                         activities=activities,
+                         users=users_list,
+                         user_id_filter=user_id_filter,
+                         activity_type=activity_type)
+
+
+# ==================== TEAMS ====================
+
+@app.route('/teams')
+@login_required
+def teams():
+    """Teams management"""
+    user_role = session.get('user_role', 'viewer')
+    if user_role not in ['admin', 'manager']:
+        flash('Access denied. Admin/Manager role required.', 'error')
+        return redirect(url_for('dashboard'))
+
+    from utils.user_manager import UserManager
+    um = UserManager(db)
+    teams_list = um.get_teams(active_only=False)
+    return render_template('teams.html', teams=teams_list)
+
+
+@app.route('/teams/add', methods=['GET', 'POST'])
+@login_required
+def add_team():
+    """Add new team"""
+    user_role = session.get('user_role', 'viewer')
+    if user_role not in ['admin', 'manager']:
+        flash('Access denied. Admin/Manager role required.', 'error')
+        return redirect(url_for('dashboard'))
+
+    from utils.user_manager import UserManager
+    um = UserManager(db)
+
+    if request.method == 'POST':
+        data = {
+            'name': request.form.get('name', '').strip(),
+            'description': request.form.get('description', '').strip(),
+            'team_lead_id': int(request.form['team_lead_id']) if request.form.get('team_lead_id') else None
+        }
+
+        if not data['name']:
+            flash('Team name is required', 'error')
+            return render_template('add_team.html', users=um.get_users())
+
+        team_id = um.create_team(data)
+        flash('Team created successfully', 'success')
+        return redirect(url_for('teams'))
+
+    users_list = um.get_users()
+    return render_template('add_team.html', users=users_list)
+
+
+@app.route('/teams/<int:team_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_team(team_id):
+    """Edit team"""
+    user_role = session.get('user_role', 'viewer')
+    if user_role not in ['admin', 'manager']:
+        flash('Access denied. Admin/Manager role required.', 'error')
+        return redirect(url_for('dashboard'))
+
+    from utils.user_manager import UserManager
+    um = UserManager(db)
+
+    team = um.get_team(team_id)
+    if not team:
+        flash('Team not found', 'error')
+        return redirect(url_for('teams'))
+
+    if request.method == 'POST':
+        data = {}
+        if request.form.get('name'):
+            data['name'] = request.form['name'].strip()
+        if request.form.get('description') is not None:
+            data['description'] = request.form['description'].strip()
+        if request.form.get('team_lead_id'):
+            data['team_lead_id'] = int(request.form['team_lead_id'])
+
+        um.update_team(team_id, data)
+        flash('Team updated successfully', 'success')
+        return redirect(url_for('teams'))
+
+    users_list = um.get_users()
+    return render_template('edit_team.html', team=team, users=users_list)
+
+
+@app.route('/teams/<int:team_id>/members', methods=['POST'])
+@login_required
+def manage_team_members(team_id):
+    """Add/remove team members"""
+    user_role = session.get('user_role', 'viewer')
+    if user_role not in ['admin', 'manager']:
+        return jsonify({'error': 'Access denied'}), 403
+
+    from utils.user_manager import UserManager
+    um = UserManager(db)
+
+    action = request.form.get('action')
+    user_id = int(request.form.get('user_id', 0))
+
+    if action == 'add':
+        um.add_team_member(team_id, user_id)
+        return jsonify({'success': True, 'message': 'Member added'})
+    elif action == 'remove':
+        um.remove_team_member(team_id, user_id)
+        return jsonify({'success': True, 'message': 'Member removed'})
+
+    return jsonify({'error': 'Invalid action'}), 400
+
+
+# ==================== CHAT HISTORY ====================
+
+@app.route('/users/<int:user_id>/chat-history')
+@login_required
+def user_chat_history(user_id):
+    """View user's AI chat history (admin only)"""
+    user_role = session.get('user_role', 'viewer')
+    if user_role != 'admin':
+        if user_id != session.get('user_id'):
+            flash('Access denied', 'error')
+            return redirect(url_for('dashboard'))
+
+    from utils.user_manager import UserManager
+    um = UserManager(db)
+
+    user = um.get_user(user_id)
+    if not user:
+        flash('User not found', 'error')
+        return redirect(url_for('users'))
+
+    chat_history = um.get_user_chat_history(user_id)
+
+    return render_template('user_chat_history.html',
+                         user=user,
+                         chat_history=chat_history)
 
 
 # ==================== DASHBOARD ====================
@@ -856,6 +1292,9 @@ def add_order():
 def order_detail(order_id):
     """Order details"""
     order = db.get_order_details(order_id)
+    if not order:
+        flash('Order not found', 'error')
+        return redirect(url_for('sales'))
     return render_template('order_detail.html', order=order)
 
 
@@ -1444,33 +1883,44 @@ def analytics():
     scheduler_status = get_scheduler_status()
     dashboard = db.get_dashboard_data()
     
-    # Get monthly data for charts
+    # Get monthly data for charts from actual data range
     from datetime import datetime, timedelta
-    months = []
-    revenues = []
-    expenses = []
+    conn = db.get_connection()
+    cursor = conn.cursor()
     
-    for i in range(5, -1, -1):
-        d = datetime.now() - timedelta(days=30*i)
-        month_str = d.strftime('%Y-%m')
-        months.append(d.strftime('%b'))
-        
-        summary = db.get_financial_summary(
-            start_date=f'{month_str}-01',
-            end_date=f'{month_str}-31'
-        )
-        revenues.append(summary.get('total_income', 0))
-        expenses.append(summary.get('total_expense', 0))
+    # Get the most recent 6 months that have data
+    cursor.execute("""
+        SELECT strftime('%Y-%m', transaction_date) as month,
+               SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as revenue,
+               SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as expenses
+        FROM financial_transactions
+        GROUP BY strftime('%Y-%m', transaction_date)
+        ORDER BY month DESC
+        LIMIT 6
+    """)
+    trend_rows = cursor.fetchall()
+    trend_rows.reverse()  # chronological order
+    
+    if trend_rows:
+        months = [row['month'] for row in trend_rows]
+        revenues = [row['revenue'] for row in trend_rows]
+        expenses = [row['expenses'] for row in trend_rows]
+    else:
+        months = []
+        revenues = []
+        expenses = []
     
     # Get batch status for pie chart
-    batches = db.get_batches()
+    cursor.execute("SELECT status, COUNT(*) as cnt FROM production_batches GROUP BY status")
+    status_counts = {row['status']: row['cnt'] for row in cursor.fetchall()}
     batch_labels = ['Planning', 'Brewing', 'Fermenting', 'Completed']
     batch_counts = [
-        len([b for b in batches if b['status'] == 'planned']),
-        len([b for b in batches if b['status'] == 'brewing']),
-        len([b for b in batches if b['status'] == 'fermenting']),
-        len([b for b in batches if b['status'] == 'completed'])
+        status_counts.get('planned', 0),
+        status_counts.get('brewing', 0),
+        status_counts.get('fermenting', 0),
+        status_counts.get('completed', 0)
     ]
+    conn.close()
     
     return render_template('analytics.html',
                          agent_status=agent_status,
@@ -1490,7 +1940,7 @@ def notifications():
     if not user_id:
         return redirect(url_for('login'))
     
-    notifications = db.get_notifications(user_id=user_id, limit=50)
+    notifications = db.get_notifications(user_id=user_id)
     unread_count = db.get_unread_notification_count(user_id)
     
     return render_template('notifications.html',
@@ -3178,20 +3628,9 @@ def ai_get_suggestions():
     """Get proactive suggestions from AI"""
     try:
         from utils.ai_planner import get_planner
-        import asyncio
         
         planner = get_planner()
-        
-        # Get recent context from session
-        session_id = f"web_{session.get('user_id', 'anonymous')}"
-        
-        # Generate suggestions asynchronously
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            suggestions = loop.run_until_complete(planner.generate_proactive_suggestions(session_id))
-        finally:
-            loop.close()
+        suggestions = planner.get_proactive_suggestions()
         
         return jsonify({
             'success': True,

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Staff Schedule - Brewery Manager{% endblock %}
+{% block content %}
+<h2>Staff Schedule - {{ schedule_date }}</h2>
+<div class="table-responsive">
+<table class="table table-striped">
+    <thead><tr><th>Staff</th><th>Shift</th><th>Start</th><th>End</th><th>Notes</th></tr></thead>
+    <tbody>
+    {% for s in schedule %}
+    <tr><td>{{ s.staff_name or '' }}</td><td>{{ s.shift }}</td><td>{{ s.start_time }}</td><td>{{ s.end_time }}</td><td>{{ s.notes or '' }}</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

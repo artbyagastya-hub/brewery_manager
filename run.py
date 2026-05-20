@@ -10,6 +10,13 @@ import sys
 # Add the current directory to the path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+# Load .env file for environment variables
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv not installed
+
 from web.app import app, ws_manager
 from utils.performance import init_connection_pool, optimize_database
 

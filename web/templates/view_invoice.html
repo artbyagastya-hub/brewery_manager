@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Invoice - Brewery Manager{% endblock %}
+{% block content %}
+<h2>Invoice #{{ invoice.invoice_number if invoice else '' }}</h2>
+<div class="card"><div class="card-body">
+<p><strong>Customer:</strong> {{ invoice.customer_name if invoice else '' }}</p>
+<p><strong>Date:</strong> {{ invoice.invoice_date if invoice else '' }}</p>
+<table class="table table-striped">
+    <thead><tr><th>Product</th><th>Qty</th><th>Price</th><th>Subtotal</th></tr></thead>
+    <tbody>
+    {% for item in invoice.items if invoice and invoice.items %}<tr><td>{{ item.product_name }}</td><td>{{ item.quantity }}</td><td>{{ item.unit_price|currency }}</td><td>{{ item.subtotal|currency }}</td></tr>{% endfor %}
+    </tbody>
+</table>
+<p><strong>Total:</strong> {{ invoice.total|currency if invoice else '0' }}</p>
+</div></div>
+{% endblock %}

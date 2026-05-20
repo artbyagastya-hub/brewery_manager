@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Tax Report - Brewery Manager{% endblock %}
+{% block content %}
+<h2>Tax Report</h2>
+{% if report %}
+<div class="card"><div class="card-body">
+    <p><strong>SCT (Special Consumption Tax):</strong> {{ report.get('sct', 0)|currency }}</p>
+    <p><strong>VAT (10%):</strong> {{ report.get('vat', 0)|currency }}</p>
+    <p><strong>Environmental Tax:</strong> {{ report.get('environmental_tax', 0)|currency }}</p>
+    <p><strong>Total:</strong> {{ report.get('total', 0)|currency }}</p>
+</div></div>
+{% else %}
+<p class="text-muted">No tax data available.</p>
+{% endif %}
+{% endblock %}

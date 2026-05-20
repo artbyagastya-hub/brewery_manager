@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Edit User - Brewery Manager{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h2 mb-1">✏️ Edit User: {{ user.username }}</h1>
+    </div>
+    <a href="{{ url_for('users') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+</div>
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Username</label>
+                            <input type="text" name="username" class="form-control" value="{{ user.username }}"
+                                required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control" value="{{ user.email }}" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" name="full_name" class="form-control" value="{{ user.full_name or '' }}">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Role</label>
+                            <select name="role" class="form-select">
+                                {% for r in ['admin','manager','brewer','sales','viewer'] %}
+                                <option value="{{ r }}" {% if user.role==r %}selected{% endif %}>{{ r|capitalize }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Department</label>
+                            <input type="text" name="department" class="form-control"
+                                value="{{ user.department or '' }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="text" name="phone" class="form-control" value="{{ user.phone or '' }}">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Team</label>
+                            <select name="team_id" class="form-select">
+                                <option value="">No Team</option>
+                                {% for team in teams %}
+                                <option value="{{ team.id }}" {% if user.team_id==team.id %}selected{% endif %}>{{
+                                    team.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Status</label>
+                            <select name="is_active" class="form-select">
+                                <option value="1" {% if user.is_active %}selected{% endif %}>Active</option>
+                                <option value="0" {% if not user.is_active %}selected{% endif %}>Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-3">
+                        <div>
+                            <form method="POST" action="{{ url_for('admin_reset_user_password', user_id=user.id) }}"
+                                class="d-inline" onsubmit="return confirm('Reset password?')">
+                                <button type="submit" class="btn btn-warning"><i class="fas fa-key"></i> Reset
+                                    Password</button>
+                            </form>
+                        </div>
+                        <div>
+                            <a href="{{ url_for('users') }}" class="btn btn-secondary me-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

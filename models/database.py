@@ -1712,7 +1712,11 @@ class Database:
             JOIN customers c ON so.customer_id = c.id
             WHERE so.id = ?
         """, (order_id,))
-        order = dict(cursor.fetchone())
+        row = cursor.fetchone()
+        if not row:
+            conn.close()
+            return None
+        order = dict(row)
 
         cursor.execute("""
             SELECT oi.*, p.name as product_name, p.style as product_style
@@ -1982,20 +1986,74 @@ class Database:
         cursor.execute("SELECT COUNT(*) FROM staff WHERE is_active = 1")
         total_staff = cursor.fetchone()[0]
 
-        # Monthly revenue
+        # Revenue & Expenses - try current month first, fallback to all-time
         first_of_month = datetime.now().strftime('%Y-%m-01')
         cursor.execute("""
             SELECT COALESCE(SUM(amount), 0) FROM financial_transactions
             WHERE type = 'income' AND transaction_date >= ?
         """, (first_of_month,))
         monthly_revenue = cursor.fetchone()[0]
-
-        # Monthly expenses
+        
         cursor.execute("""
             SELECT COALESCE(SUM(amount), 0) FROM financial_transactions
             WHERE type = 'expense' AND transaction_date >= ?
         """, (first_of_month,))
         monthly_expenses = cursor.fetchone()[0]
+        
+        # If current month has no data, show all-time totals
+        if monthly_revenue == 0 and monthly_expenses == 0:
+            cursor.execute("""
+                SELECT COALESCE(SUM(amount), 0) FROM financial_transactions
+                WHERE type = 'income'
+            """)
+            monthly_revenue = cursor.fetchone()[0]
+            cursor.execute("""
+                SELECT COALESCE(SUM(amount), 0) FROM financial_transactions
+                WHERE type = 'expense'
+            """)
+            monthly_expenses = cursor.fetchone()[0]
+        
+        # Also get year-to-date for reports
+        first_of_year = datetime.now().strftime('%Y-01-01')
+        cursor.execute("""
+            SELECT COALESCE(SUM(amount), 0) FROM financial_transactions
+            WHERE type = 'income' AND transaction_date >= ?
+        """, (first_of_year,))
+        ytd_revenue = cursor.fetchone()[0]
+        cursor.execute("""
+            SELECT COALESCE(SUM(amount), 0) FROM financial_transactions
+            WHERE type = 'expense' AND transaction_date >= ?
+        """, (first_of_year,))
+        ytd_expenses = cursor.fetchone()[0]
+        # Fallback to all-time if year also empty
+        if ytd_revenue == 0:
+            ytd_revenue = monthly_revenue
+        if ytd_expenses == 0:
+            ytd_expenses = monthly_expenses
+        
+        # Get monthly trend data for last 12 months
+        twelve_months_ago = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-01')
+        cursor.execute("""
+            SELECT strftime('%Y-%m', transaction_date) as month,
+                   SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as revenue,
+                   SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as expenses
+            FROM financial_transactions
+            WHERE transaction_date >= ?
+            GROUP BY strftime('%Y-%m', transaction_date)
+            ORDER BY month
+        """, (twelve_months_ago,))
+        monthly_trend = [dict(row) for row in cursor.fetchall()]
+        # If no trend data, get all months
+        if not monthly_trend:
+            cursor.execute("""
+                SELECT strftime('%Y-%m', transaction_date) as month,
+                       SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as revenue,
+                       SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as expenses
+                FROM financial_transactions
+                GROUP BY strftime('%Y-%m', transaction_date)
+                ORDER BY month
+            """)
+            monthly_trend = [dict(row) for row in cursor.fetchall()]
 
         # Batch status counts for production chart
         cursor.execute("SELECT COUNT(*) FROM production_batches WHERE status = 'planned'")
@@ -3230,6 +3288,16 @@ class Database:
         result = cursor.rowcount > 0
         conn.close()
         return result
+
+    def get_unread_notification_count(self, user_id: int) -> int:
+        """Get count of unread notifications for a user"""
+        conn = self.get_connection()
+        cursor = conn.execute('''
+            SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = 0
+        ''', (user_id,))
+        count = cursor.fetchone()[0]
+        conn.close()
+        return count
 
     # ==================== AGENT LOGS ====================
 

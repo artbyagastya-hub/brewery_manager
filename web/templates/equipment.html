@@ -52,7 +52,8 @@
                     </span>
                 </p>
                 {% if eq.last_cleaned %}
-                <p class="text-muted small">Last cleaned: {{ eq.last_cleaned[:10] }}</p>
+                <p class="text-muted small">Last cleaned: {{ eq.last_cleaned[:10] if eq.last_cleaned and eq.last_cleaned
+                    is string else (eq.last_cleaned.strftime('%Y-%m-%d') if eq.last_cleaned else 'N/A') }}</p>
                 {% endif %}
                 <div class="btn-group btn-group-sm">
                     <form method="POST" action="{{ url_for('clean_equipment', equipment_id=eq.id) }}" class="d-inline">

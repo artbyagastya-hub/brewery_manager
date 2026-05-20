@@ -64,7 +64,8 @@
                     <strong>Available</strong>
                 </div>
                 {% if tank.last_cleaned %}
-                <p class="small text-muted">Last cleaned: {{ tank.last_cleaned[:10] }}</p>
+                <p class="small text-muted">Last cleaned: {{ tank.last_cleaned.strftime('%Y-%m-%d') if tank.last_cleaned
+                    is not string else tank.last_cleaned[:10] }}</p>
                 {% endif %}
                 {% endif %}
             </div>
@@ -120,7 +121,8 @@
                     <strong>Available</strong>
                 </div>
                 {% if tank.last_cleaned %}
-                <p class="small text-muted">Last cleaned: {{ tank.last_cleaned[:10] }}</p>
+                <p class="small text-muted">Last cleaned: {{ tank.last_cleaned.strftime('%Y-%m-%d') if tank.last_cleaned
+                    is not string else tank.last_cleaned[:10] }}</p>
                 {% endif %}
                 {% endif %}
             </div>
@@ -176,7 +178,8 @@
                     <strong>Available</strong>
                 </div>
                 {% if tank.last_cleaned %}
-                <p class="small text-muted">Last cleaned: {{ tank.last_cleaned[:10] }}</p>
+                <p class="small text-muted">Last cleaned: {{ tank.last_cleaned.strftime('%Y-%m-%d') if tank.last_cleaned
+                    is not string else tank.last_cleaned[:10] }}</p>
                 {% endif %}
                 {% endif %}
             </div>

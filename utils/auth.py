@@ -271,6 +271,26 @@ class AuthManager:
         self.db.log_audit(user_id, 'logout', 'user', user_id, None, None)
 
 
+def permission_required(permission: str):
+    """Decorator to require a specific permission"""
+    def decorator(f):
+        @functools.wraps(f)
+        @login_required
+        def decorated_function(*args, **kwargs):
+            from utils.user_manager import UserManager
+            db = getattr(g, 'db', None)
+            if db:
+                um = UserManager(db)
+                if not um.has_permission(session.get('user_id'), permission):
+                    if request.path.startswith('/api/'):
+                        return jsonify({'error': f'Permission required: {permission}'}), 403
+                    flash('You do not have permission to perform this action.', 'danger')
+                    return redirect(url_for('dashboard'))
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+
 def get_auth_manager(db):
     """Get authentication manager instance"""
     return AuthManager(db)

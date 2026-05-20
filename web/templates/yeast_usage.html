@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Yeast Usage Log - Brewery Manager{% endblock %}
+{% block content %}
+<h2>Yeast Usage Log</h2>
+<div class="table-responsive">
+<table class="table table-striped">
+    <thead><tr><th>Date</th><th>Strain</th><th>Batch</th><th>Qty Used</th><th>Notes</th></tr></thead>
+    <tbody>
+    {% for u in usage_log %}<tr><td>{{ u.used_date or '' }}</td><td>{{ u.name or '' }}</td><td>{{ u.batch_number or '' }}</td><td>{{ u.quantity_used }} {{ u.unit }}</td><td>{{ u.notes or '' }}</td></tr>{% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

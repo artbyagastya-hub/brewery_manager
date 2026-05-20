@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('nav.users', 'User Management') }} - Brewery Manager{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h2 mb-1">👥 {{ t('users.title', 'User Management') }}</h1>
+        <p class="text-muted mb-0">{{ t('users.subtitle', 'Manage users, roles, and permissions') }}</p>
+    </div>
+    <div>
+        <a href="{{ url_for('user_activity') }}" class="btn btn-outline-secondary me-2">
+            <i class="fas fa-history"></i> {{ t('users.activity_log', 'Activity Log') }}
+        </a>
+        <a href="{{ url_for('add_user') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> {{ t('users.add_user', 'Add User') }}
+        </a>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+{% if stats %}
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">{{ t('users.total_users', 'Total Users') }}</h6>
+                        <h3 class="mb-0">{{ stats.total }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-users fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">{{ t('users.active', 'Active') }}</h6>
+                        <h3 class="mb-0">{{ stats.active }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-user-check fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">{{ t('users.admins', 'Admins') }}</h6>
+                        <h3 class="mb-0">{{ stats.by_role.get('admin', 0) }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-user-shield fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">{{ t('users.recent_logins', 'Recent Logins') }}</h6>
+                        <h3 class="mb-0">{{ stats.recent_logins }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-sign-in-alt fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">{{ t('users.role', 'Role') }}</label>
+                <select name="role" class="form-select">
+                    <option value="">{{ t('common.all', 'All Roles') }}</option>
+                    <option value="admin" {% if role_filter=='admin' %}selected{% endif %}>Admin</option>
+                    <option value="manager" {% if role_filter=='manager' %}selected{% endif %}>Manager</option>
+                    <option value="brewer" {% if role_filter=='brewer' %}selected{% endif %}>Brewer</option>
+                    <option value="sales" {% if role_filter=='sales' %}selected{% endif %}>Sales</option>
+                    <option value="viewer" {% if role_filter=='viewer' %}selected{% endif %}>Viewer</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">{{ t('users.team', 'Team') }}</label>
+                <select name="team_id" class="form-select">
+                    <option value="">{{ t('common.all', 'All Teams') }}</option>
+                    {% for team in teams %}
+                    <option value="{{ team.id }}" {% if team_filter==team.id|string %}selected{% endif %}>{{ team.name
+                        }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-outline-primary me-2">
+                    <i class="fas fa-filter"></i> {{ t('common.filter', 'Filter') }}
+                </button>
+                <a href="{{ url_for('users') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i> {{ t('common.clear', 'Clear') }}
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Users Table -->
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>{{ t('users.username', 'Username') }}</th>
+                    <th>{{ t('users.full_name', 'Full Name') }}</th>
+                    <th>{{ t('users.email', 'Email') }}</th>
+                    <th>{{ t('users.role', 'Role') }}</th>
+                    <th>{{ t('users.department', 'Department') }}</th>
+                    <th>{{ t('users.status', 'Status') }}</th>
+                    <th>{{ t('users.last_login', 'Last Login') }}</th>
+                    <th>{{ t('common.actions', 'Actions') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-sm bg-primary text-white rounded-circle me-2 d-flex align-items-center justify-content-center"
+                                style="width:32px;height:32px;font-size:14px;">
+                                {{ user.username[0].upper() }}
+                            </div>
+                            <strong>{{ user.username }}</strong>
+                        </div>
+                    </td>
+                    <td>{{ user.full_name or '-' }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>
+                        <span
+                            class="badge bg-{{ 'danger' if user.role == 'admin' else 'warning' if user.role == 'manager' else 'success' if user.role == 'brewer' else 'info' if user.role == 'sales' else 'secondary' }}">
+                            {{ user.role|upper }}
+                        </span>
+                    </td>
+                    <td>{{ user.department or '-' }}</td>
+                    <td>
+                        {% if user.is_active %}
+                        <span class="badge bg-success">Active</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user.last_login %}
+                        <small>{{ user.last_login[:16] }}</small>
+                        {% else %}
+                        <small class="text-muted">Never</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{{ url_for('edit_user', user_id=user.id) }}" class="btn btn-outline-primary"
+                                title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{{ url_for('user_permissions', user_id=user.id) }}" class="btn btn-outline-info"
+                                title="Permissions">
+                                <i class="fas fa-key"></i>
+                            </a>
+                            <a href="{{ url_for('user_chat_history', user_id=user.id) }}"
+                                class="btn btn-outline-secondary" title="Chat History">
+                                <i class="fas fa-comments"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not users %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-4">
+                        <i class="fas fa-users fa-2x mb-2 d-block"></i>
+                        {{ t('users.no_users', 'No users found') }}
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
