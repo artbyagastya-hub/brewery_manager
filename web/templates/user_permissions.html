@@ -3,6 +3,7 @@
 {% block content %}
 <h2>Permissions for {{ user.full_name or user.username }}</h2>
 <form method="POST">
+                {{ csrf_token() }}
 <div class="card"><div class="card-body">
 {% for perm in all_permissions %}
 <div class="form-check">

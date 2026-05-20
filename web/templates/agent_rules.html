@@ -75,6 +75,7 @@
                         </td>
                         <td>
                             <form method="POST" action="/agent/rules/{{ rule.id }}/toggle" class="d-inline">
+                {{ csrf_token() }}
                                 {% if rule.is_enabled %}
                                 <button type="submit" class="btn btn-sm btn-outline-danger">
                                     {{ t('disable', 'Disable') }}

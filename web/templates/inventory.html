@@ -86,6 +86,7 @@
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <form method="POST" action="/inventory/{{ m.id }}/adjust">
+                {{ csrf_token() }}
                                 <div class="modal-header">
                                     <h5 class="modal-title">Adjust Stock: {{ m.name }}</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>

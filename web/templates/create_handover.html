@@ -3,6 +3,7 @@
 {% block content %}
 <h2>Create Shift Handover</h2>
 <form method="POST" class="card p-4">
+                {{ csrf_token() }}
     <div class="mb-3"><label class="form-label">Date</label><input type="date" name="shift_date" class="form-control" required></div>
     <div class="mb-3"><label class="form-label">Shift</label><select name="shift_type" class="form-select"><option value="morning">Morning</option><option value="afternoon">Afternoon</option><option value="night">Night</option></select></div>
     <div class="mb-3"><label class="form-label">From Staff</label><select name="from_staff_id" class="form-select">{% for s in staff %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}</select></div>

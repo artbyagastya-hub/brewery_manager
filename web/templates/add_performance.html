@@ -3,6 +3,7 @@
 {% block content %}
 <h2>Add Performance Metric</h2>
 <form method="POST" class="card p-4">
+                {{ csrf_token() }}
     <div class="mb-3"><label class="form-label">Date</label><input type="date" name="metric_date" class="form-control" required></div>
     <div class="mb-3"><label class="form-label">Category</label><input type="text" name="category" class="form-control" required></div>
     <div class="mb-3"><label class="form-label">Metric Name</label><input type="text" name="metric_name" class="form-control" required></div>
