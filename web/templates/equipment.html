@@ -57,12 +57,12 @@
                 {% endif %}
                 <div class="btn-group btn-group-sm">
                     <form method="POST" action="{{ url_for('clean_equipment', equipment_id=eq.id) }}" class="d-inline">
-                {{ csrf_token() }}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn btn-outline-success btn-sm">✓ Cleaned</button>
                     </form>
                     <form method="POST" action="{{ url_for('update_equipment_status_route', equipment_id=eq.id) }}"
                         class="d-inline">
-                {{ csrf_token() }}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="status"
                             value="{% if eq.status == 'available' %}maintenance{% else %}available{% endif %}">
                         <button type="submit" class="btn btn-outline-secondary btn-sm">

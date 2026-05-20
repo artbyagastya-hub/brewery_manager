@@ -24,7 +24,7 @@
                     <span class="text-danger">Due: {{ item.next_due.strftime('%Y-%m-%d') }}</span>
                     <form method="POST" action="{{ url_for('complete_maintenance_route', maintenance_id=item.id) }}"
                         class="mt-2">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="csrf_token" value="<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">">
                         <input type="text" name="notes" class="form-control form-control-sm mb-1"
                             placeholder="Notes (optional)">
                         <button type="submit" class="btn btn-success btn-sm w-100">✓ Complete</button>
@@ -84,7 +84,7 @@
                         {% if item.status != 'completed' %}
                         <form method="POST" action="{{ url_for('complete_maintenance_route', maintenance_id=item.id) }}"
                             class="d-inline">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="csrf_token" value="<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">">
                             <input type="hidden" name="notes" value="">
                             <button type="submit" class="btn btn-success btn-sm">✓ Complete</button>
                         </form>

@@ -18,7 +18,7 @@
                 </div>
                 <div class="card-body">
                     <form method="POST" action="/zalo/send">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="csrf_token" value="<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">">
                         <div class="mb-3">
                             <label class="form-label">{{ t('zalo.recipient') }}</label>
                             <input type="text" class="form-control" name="recipient" placeholder="Phone number">
@@ -52,7 +52,7 @@
                 </div>
                 <div class="card-body">
                     <form method="POST" action="/zalo/broadcast">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="csrf_token" value="<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">">
                         <div class="mb-3">
                             <label class="form-label">{{ t('zalo.broadcast_message') }}</label>
                             <textarea class="form-control" name="message" rows="4" required></textarea>

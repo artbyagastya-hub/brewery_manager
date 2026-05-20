@@ -8,7 +8,7 @@
         <h2>{{ t('batch_cogs', default='Batch COGS') }}: {{ batch.batch_number }}</h2>
         <div>
             <form method="POST" action="{{ url_for('calculate_batch_cogs', batch_id=batch.id) }}" class="d-inline">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="csrf_token" value="<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">">
                 <button type="submit" class="btn btn-outline-success">
                     <i class="fas fa-calculator"></i> {{ t('auto_calculate', default='Auto-Calculate') }}
                 </button>
@@ -153,7 +153,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <form method="POST" action="{{ url_for('add_batch_cogs', batch_id=batch.id) }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="csrf_token" value="<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">">
                 <div class="modal-header">
                     <h5 class="modal-title">{{ t('add_cogs_item', default='Add COGS Item') }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>

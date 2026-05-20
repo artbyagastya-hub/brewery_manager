@@ -19,7 +19,7 @@
                 </div>
                 <div class="card-body">
                     <form method="POST" enctype="multipart/form-data">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="csrf_token" value="<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">">
 
                         <div class="mb-4">
                             <label for="file" class="form-label">{{ t('select_file', default='Select BeerSmith File

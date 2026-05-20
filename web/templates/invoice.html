@@ -12,7 +12,7 @@
     </div>
 
     <form method="POST" action="/accounting/invoice/create">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="csrf_token" value="<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">">
         <!-- Seller Information (Auto-filled) -->
         <div class="card mb-4">
             <div class="card-header">

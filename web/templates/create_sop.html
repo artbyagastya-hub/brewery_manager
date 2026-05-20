@@ -3,7 +3,7 @@
 {% block content %}
 <h2>Create SOP</h2>
 <form method="POST" class="card p-4">
-                {{ csrf_token() }}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="mb-3"><label class="form-label">Title</label><input type="text" name="title" class="form-control" required></div>
     <div class="mb-3"><label class="form-label">Category</label><input type="text" name="category" class="form-control"></div>
     <div class="mb-3"><label class="form-label">Content</label><textarea name="content" class="form-control" rows="10" required></textarea></div>

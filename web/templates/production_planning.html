@@ -112,7 +112,7 @@
                                 <form method="POST"
                                     action="{{ url_for('update_schedule_status', schedule_id=entry.id) }}"
                                     class="d-inline">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="csrf_token" value="<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">">
                                     <select name="status" class="form-select form-select-sm d-inline-block w-auto"
                                         onchange="this.form.submit()">
                                         <option value="planned" {{ 'selected' if entry.status=='planned' }}>Planned
@@ -127,7 +127,7 @@
                                 </form>
                                 <form method="POST" action="{{ url_for('delete_schedule', schedule_id=entry.id) }}"
                                     class="d-inline" onsubmit="return confirm('Delete this schedule entry?')">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="csrf_token" value="<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">
                                         <i class="fas fa-trash"></i>
                                     </button>
