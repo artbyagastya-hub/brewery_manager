@@ -1,9 +1,9 @@
 # Brewery Manager .gitignore
 
 # Database files (data, not code - initialize with seed_data.py)
-*.db
-*.db-shm
-*.db-wal
+
+
+
 
 # Python cache
 __pycache__/
